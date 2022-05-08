@@ -17,7 +17,7 @@ export default class Config {
    * 程序内部根据这个配置自动载入Home.controller.ts文件，并自动调用类里面的Home()方法实现窗口创建
    * 可以改成其他，例如 PlayVideo.controller/Theme
    */
-  public static StartPage: string = 'Home.controller/Home';
+  public static StartPage: string = 'Home.controller/Welcome';
 
   // 应用版本号
   public static CurrentAppVersion: String = '0.0.1';
