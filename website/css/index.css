@@ -1,0 +1,147 @@
+.header {
+    background: var(--background);
+    height: 1325px;
+    width: 100%;
+    text-align: center;
+}
+
+.header .logo {
+    width: 100px;
+    margin-top: 50px;
+}
+
+.header .desc {
+    color: #fff;
+    font-size: 23px;
+    line-height: 47px;
+    margin-top: 10px;
+    margin-bottom: 40px;
+}
+
+.header .banner_img {
+    width: 100%;
+}
+
+.header .desc_tips {
+    width: 915px;
+    margin: 0 auto;
+    font-family: "desc";
+    font-size: var(--decSize);
+    color: #fff;
+    font-weight: 100;
+    line-height: 36px;
+    margin-bottom: 25px;
+}
+
+.header .down {
+    width: 120px;
+    height: 42px;
+    text-align: center;
+    background: #4072e1;
+    color: #fff;
+    line-height: 42px;
+    border-radius: 25px;
+    margin: 0 auto;
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+
+.header .support {
+    font-size: 12px;
+    color: #b1b1b1;
+    font-weight: 100;
+}
+
+.content .item {
+
+}
+
+.item .title {
+    font-size: var(--titleSize);
+    color: #000;
+    font-weight: 600;
+    font-family: "title";
+    line-height: 68px;
+    margin-bottom: 20px;
+}
+
+.item .desc {
+    font-size: var(--decSize);
+    color: #000;
+    font-weight: 100;
+    font-family: "desc";
+    margin-bottom: 20px;
+    line-height: 34px;
+}
+
+.item .demonstration {
+    width: 100%;
+    position: relative;
+    background: url("../img/item_back.png");
+    background-size: cover;
+    height: 683px;
+    left: -112px;
+}
+
+.item .demonstration video {
+    width: 940px;
+    height: 590px;
+    position: absolute;
+    left: 129px;
+    top: 37px;
+}
+
+.base {
+    background: linear-gradient(484deg, rgba(139, 95, 224, 1) 0%, rgba(104, 159, 232, 1) 100%);
+}
+
+.base .title,
+.base .desc,
+.theme .desc {
+    color: #fff;
+}
+
+.core .title {
+    color: #eb1d4e;
+}
+
+.core .demonstration {
+    background: url("../img/core_back.png");
+    background-size: cover;
+    left: -50px;
+    height: 1007px;
+}
+
+.core video {
+    width: 96% !important;
+    height: 647px !important;
+    left: 33px !important;
+    object-fit: fill;
+}
+
+.theme {
+    background: #1a1a1a;
+}
+
+.theme .title {
+    color: #4cb050 !important;
+    text-shadow: 238px -64px 2px #2c2b2bb3;
+}
+
+.theme .title span {
+    color: #b45dc3 !important;
+}
+
+.theme .demonstration {
+    background: url("../img/theme.png");
+    background-size: cover;
+    left: -50px;
+}
+
+.theme .padding {
+    padding-bottom: 0 !important;
+}
+
+.contact {
+    background: #efefef;
+}

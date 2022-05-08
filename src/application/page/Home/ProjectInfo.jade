@@ -1,0 +1,123 @@
+.ProjectInfo
+    el-tabs(v-model="activeName" @tab-click="handleClick"
+        v-bind:style="{'--fill-color': $store.getters.get_list[$store.getters.get_theme].type == 'color' ? $store.getters.get_list[$store.getters.get_theme].BgColor : $store.getters.get_list[$store.getters.get_theme].activeBgColor }")
+        el-tab-pane(name='home')
+            span(slot='label' class="icons")
+                //i(class="iconfont icon-yibiaopan") &nbsp;仪表盘
+                //img(src="../../assets/img/SidebarHomeFolder.png")
+                svg.icon(aria-hidden='true')
+                    use(xlink:href="#icon-10json")
+                span &nbsp; 配置
+            div(class="package" v-bind:key="projectName")
+
+        el-tab-pane(name='task')
+            span(slot='label' class="icons")
+                //i(class="iconfont icon-config-command") &nbsp;任务
+                //img(src="../../assets/img/SidebarAllMyFiles.png")
+                svg.icon(aria-hidden='true')
+                    use(xlink:href="#icon-config-command")
+                span &nbsp;任务
+            .tabContent
+                el-collapse.runList(@change="collapseChange" v-bind:accordion="true")
+                    el-collapse-item(v-bind:name="`${v.ScriptName}_${i}`" v-for="(v,i) in CurrentTaskList"
+                        v-bind:key="`${projectName}_${v.ScriptName}_${i}`")
+                        template(slot="title")
+                            svg.icon.icon-npm1(aria-hidden='true')
+                                use(xlink:href='#icon-npm1')
+                            .text
+                                span.ScriptName {{ v.ScriptName }}
+                                span.ScriptShell {{ v.ScriptShell }}
+                        .terminals
+                            .terminal_action
+                                .a_left
+                                    svg.icon.run(aria-hidden='true' v-bind:title="v.IsRuning == 'idle' ? '点击运行' : '点击停止' "
+                                        @click="v.IsRuning == 'idle' ? RunCmd(v) : StopCmd(v) ")
+                                        use(v-bind:xlink:href=" v.IsRuning == 'idle' ? '#icon-qidong' : '#icon-zanting2' ")
+                                .a_right
+                                    svg.icon.icon-copy(aria-hidden='true' title="复制" @click="copyContent(v)")
+                                        use(xlink:href='#icon-copy')
+                                    svg.icon.icon-dibu(aria-hidden='true' title="到底部" @click="ToBottom(v)")
+                                        use(xlink:href='#icon-dibu')
+                                    svg.icon.icon-clearup(aria-hidden='true' title="清除日志" @click="clearLog(v)")
+                                        use(xlink:href='#icon-delete')
+
+                            div(v-bind:ref="`${projectName}_${v.ScriptName}`"
+                                v-bind:key="projectName+v.ScriptName"
+                                v-bind:class="`terminal_list ${projectName}_${v.ScriptName}`")
+
+        el-tab-pane(name='dependent')
+            span(slot='label' class="icons")
+                //i(class="iconfont icon-yilaiguanxi") &nbsp;依赖
+                //img(src="../../assets/img/SidebarDropBoxFolder.png")
+                svg.icon(aria-hidden='true')
+                    use(xlink:href="#icon-gengduoguanxi")
+                span &nbsp;依赖
+            .tabContent
+                .dependent_action
+                    .title 安装依赖
+                    .action_list
+                        el-tooltip(effect='dark', content='安装依赖', placement='bottom-start')
+                            svg.icon(aria-hidden='true' @click="isShowInstallDev = true")
+                                use(xlink:href='#icon-financial_install')
+                //- 正式环境依赖
+                .dependent(v-for="(v,i) in CurrentDependenList" v-bind:key="i")
+                    .title {{ v.title }}
+                    ul.dependentList
+                        div(v-if="v.list.length != 0")
+                            li.item.nodrag(v-for="(va,index) in v.list" v-bind:key="index" @click="PlugsInfo(va)")
+                              .left
+                                  img(v-bind:src="va.logoImg")
+                                  .text
+                                      span.dTitle
+                                        | {{ va.name }}
+                                        span.version &nbsp;&nbsp; 版本：{{ va.currentVersion }}
+                                      span.version {{ va.description }}
+                              .right
+                                  svg.icon.icon-shengji(aria-hidden='true' v-bind:title="'升级 '+va.name" @click.stop="updatePack(i, va.name)")
+                                      use(xlink:href='#icon-shengji')
+                                  svg.icon.icon-delete(aria-hidden='true' v-bind:title="'删除：'+va.name" @click.stop="deletePack(va,i, va.name)")
+                                      use(xlink:href='#icon-delete')
+                                  svg.icon.icon-shouyeshouye(aria-hidden='true' title="官网" @click.stop="WebSite(va.website)")
+                                      use(xlink:href='#icon-shouyeshouye')
+                        .no_dependent(v-else)
+                            svg.icon.icon-empt(aria-hidden='true')
+                                use(xlink:href='#icon-empty')
+                            div 无依赖
+
+        //el-tab-pane(name='setting' v-bind:key="projectName")
+        //    span(slot='label' class="icons")
+        //        //i(class="iconfont icon-tubiao_peizhi")
+        //        //img(src="../../assets/img/SidebarSmartFolder.png")
+        //        svg.icon(aria-hidden='true')
+        //            use(xlink:href="#icon-tubiao_peizhi")
+        //        span &nbsp;设置
+        //    .tabContent 设置
+                //.dependent_action
+                //    .title 进程管理器
+                //    el-table(v-if="isRunScript" v-bind:data='currentProcess', style='width: 100%;margin-bottom: 20px;',
+                //        v-bind:row-key='getRowKeys', border='',default-expand-all='',
+                //        v-bind:tree-props="{children: 'children', hasChildren: 'hasChildren'}")
+                //        el-table-column(prop='name', label='进程名称',width='300')
+                //        el-table-column(prop='load', label='CPU%')
+                //        el-table-column(prop='mem', label='内存(MB)')
+                //        el-table-column(prop='pid', label='PID')
+                //
+                //    .empty(v-else)
+                //        i(class="el-icon-files")
+                //        .title_tips 暂未启动过任何命令
+                //        .tips {{ titleTips }}
+
+    el-dialog.nodrag(title="安装依赖" v-bind:visible.sync="isShowInstallDev"
+              @close="isShowInstallDev = false"
+              width="60%" v-bind:close-on-click-modal="false" v-bind:destroy-on-close="true")
+        el-row(v-bind:gutter="18")
+            el-col(v-bind:span='12')
+                el-input.input-with-select(v-model="PlugInput" placeholder='请输入需要安装的插件名' clearable)
+            el-col(v-bind:span='8')
+                el-select(placeholder='选择安装环境' v-model="Environment" clearable)
+                    el-option(label='生产环境', v-bind:value='0')
+                    el-option(label='开发环境', v-bind:value='1')
+            el-col(v-bind:span='3')
+                el-button(plain @click="SearchList" v-bind:loading="isInstalling") 安装
+
+        .nodata(v-else) 没有数据

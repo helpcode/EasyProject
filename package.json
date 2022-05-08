@@ -1,0 +1,95 @@
+{
+  "name": "EasyProject",
+  "version": "1.0.0",
+  "description": "一款前端项目管理工具",
+  "main": "dist/App.js",
+  "scripts": {
+    "dev": "concurrently \"tsc -w\" \"gulp\" ",
+    "el": "Electron .",
+    "mac": "electron-builder --mac --x64",
+    "win": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.bmy.EasyProject",
+    "productName": "EasyProject",
+    "copyright": "Copyright © 2022 bmy",
+    "files": [
+      "dist/**/*"
+    ],
+    "directories": {
+      "output": "./build"
+    },
+    "dmg": {
+      "background": "build/data/back.png",
+      "window": {
+        "width": 514,
+        "height": 409
+      },
+      "contents": [
+        {
+          "x": 410,
+          "y": 190,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 130,
+          "y": 190,
+          "type": "file"
+        }
+      ]
+    },
+    "mac": {
+      "icon": "build/data/EasyProject.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "target": [
+        "dmg","7z"
+      ]
+    },
+    "win": {
+      "icon": "pic.ico",
+      "target": [
+        "7z"
+      ]
+    }
+  },
+  "keywords": [],
+  "author": "bmy",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/deep-diff": "^1.0.0",
+    "@types/jade": "^0.0.30",
+    "@types/lowdb": "^1.0.9",
+    "@types/node": "^17.0.10",
+    "electron": "^16.0.0-beta.6",
+    "electron-reload": "^2.0.0-alpha.1",
+    "gulp": "^4.0.2",
+    "gulp-jade": "^1.1.0",
+    "gulp-less": "^4.0.1",
+    "gulp-plumber": "^1.2.1",
+    "gulp-watch": "^5.0.1",
+    "gulp-watch-path": "^0.1.0"
+  },
+  "dependencies": {
+    "@types/fs-extra": "^9.0.13",
+    "about-window": "^1.13.4",
+    "axios": "^0.21.0",
+    "deep-diff": "^1.0.2",
+    "execa": "^4.1.0",
+    "fs-extra": "^9.0.1",
+    "globby": "^11.0.1",
+    "jade": "^1.11.0",
+    "lowdb": "^1.0.0",
+    "module-alias": "^2.2.2",
+    "moment": "^2.29.1",
+    "monaco-editor": "^0.33.0",
+    "monaco-themes": "^0.4.1",
+    "nmls": "^3.0.1",
+    "reflect-metadata": "^0.1.13",
+    "tree-kill": "^1.2.2",
+    "uninstall-package": "^0.4.0",
+    "xterm": "^4.9.0",
+    "xterm-addon-web-links": "^0.4.0"
+  }
+}

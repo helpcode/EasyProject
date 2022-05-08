@@ -1,0 +1,32 @@
+@font-face {
+    font-family: "title";
+    src: url("https://13315641.s21i.faiusr.com/76/1/ABUIudysBhBMGAAg7sPB_AUo2L3_RA") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "desc";
+    src: url("https://13315641.s21i.faiusr.com/76/1/ABUIudysBhBMGAAg2e_fgQYomsuqwgE") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+:root {
+    /*背景色*/
+    --background: rgba(0, 0, 0, 1);
+    /*标题颜色*/
+    --titleColor: rgb(0, 0, 0);
+    --titleSize: 48px;
+    --decSize: 18px;
+}
+
+.auto {
+    width: 1200px;
+    margin: 0 auto;
+}
+
+.padding {
+    padding-top: 110px;
+    padding-bottom: 60px;
+}

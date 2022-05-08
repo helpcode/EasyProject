@@ -1,0 +1,21 @@
+doctype html
+html
+    head
+        meta(charset="utf-8")
+        meta(http-equiv="X-UA-Compatible" content="IE=edge")
+        meta(name="viewport" content="width=device-width, initial-scale=1")
+        meta(name="renderer" content="webkit")
+        meta(http-equiv="Cache-Control" content="no-siteapp")
+        link(rel='stylesheet', href='../../assets/css/clear.css')
+        each v in globals !== undefined ? globals.css : []
+            link(rel='stylesheet', href=`${v}`)
+        each v in globals !== undefined ? globals.js : []
+            script(src=`${v}`)
+
+    block title
+    body
+        // - if (header)
+        //     include ../components/header
+        block content
+
+        block script

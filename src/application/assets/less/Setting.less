@@ -1,0 +1,190 @@
+@import "color";
+
+
+.Setting {
+  .title {
+    font-size: 18px;
+    align-items: center;
+    display: flex;
+    padding-bottom: 15px;
+    border-bottom: 0.6px solid @lineColoe;
+    i {
+      font-size: 15px;
+      cursor: pointer;
+    }
+    span {
+      margin-left: 10px;
+    }
+  }
+  .warp {
+    margin: 20px 0;
+    border-bottom: 0.5px solid @lineColoe;
+    .warp_title {
+      font-size: 17px;
+      color: #303133;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      //.custom {
+      //  margin-right: 15px;
+      //  font-size: 14px;
+      //  color: #8d8d8d;
+      //  cursor: pointer;
+      //}
+    }
+    .theme_list {
+      display: flex;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      li {
+        width: 18%;
+        height: 50px;
+        border-radius: 6px;
+        margin-bottom: 11px;
+        text-align: center;
+        margin-right: 15px;
+        cursor: pointer;
+        position: relative;
+        display: flex;
+        justify-content: flex-end;
+        background-size: cover !important;
+        background-position: center !important;
+        span {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%,-50%);
+          font-size: 14px;
+        }
+        i {
+          position: absolute;
+          right: 7px;
+          top: 6px;
+          font-size: 20px;
+        }
+        .back {
+          width: 50%;
+          height: 100%;
+          border-radius: 6px;
+        }
+      }
+      .add {
+        width: 18%;
+        .custom {
+          height: 50px;
+          border-radius: 6px;
+          margin-bottom: 11px;
+          margin-right: 15px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 0.6px solid #8b8b8b;
+          color: #8b8b8b;
+          cursor: pointer;
+        }
+      }
+    }
+    .login_start {
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      .silder_opacity {
+        width: 20% ;
+        .el-slider__runway {
+          margin: 0 !important;
+          .el-slider__button-wrapper {
+            width: 18px !important;
+            height: 18px !important;
+            top: -9px !important;
+          }
+        }
+        .el-slider__bar {
+          background-color: var(--fill-color) !important;
+        }
+        .el-slider__button {
+          border-color: var(--fill-color) !important;
+        }
+      }
+      .el-checkbox {
+        margin-right: 10px;
+      }
+      input {
+        width: 18px;
+        height: 22px;
+        margin-left: 15px;
+      }
+    }
+    .children {
+      margin-left: 15px;
+    }
+  }
+  .custom_dialog {
+    .el-dialog__body {
+      padding-bottom: 15px !important;
+    }
+    .custom_wrap {
+      height: 300px;
+      .action {
+        height: 100%;
+        display: flex;
+        .upload_local,
+        .upload_network {
+          width: 50%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          flex-direction: column;
+          cursor: pointer;
+          text-align: center;
+          input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+          }
+        }
+        .upload_network {
+
+        }
+        p {
+          margin-top: 9px;
+        }
+        i {
+          font-size: 30px;
+        }
+      }
+      .el-image {
+        overflow: scroll !important;
+        .el-image__inner {
+          height: auto !important;
+        }
+      }
+    }
+    .custom_footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 17px;
+      .left {
+        display: flex;
+        align-items: center;
+        .color_block {
+          display: flex;
+          align-items: center;
+          margin-right: 12px;
+          span {}
+          input {
+            width: 18px;
+            height: 22px;
+          }
+        }
+      }
+      .right {}
+    }
+  }
+}

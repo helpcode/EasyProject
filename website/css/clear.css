@@ -1,0 +1,33 @@
+body,ul,li,p,h1,h2,h3,h4,h5,h6 {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-size: 14px;
+    font-weight: normal;
+    text-decoration: none;
+    font-family: "微软雅黑";
+    color: #222222;
+}
+
+li {
+    list-style: none;
+}
+
+a {
+    text-decoration: none;
+}
+
+input, video {
+    outline: none;
+    border: none;
+}
+
+video::-webkit-media-controls-panel{
+    background: none !important;
+}
+
+video::-webkit-media-controls-volume-control-container {
+    display: none !important;
+}

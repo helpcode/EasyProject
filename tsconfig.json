@@ -1,0 +1,48 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "strict": true,
+    "jsx": "preserve",
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "sourceMap": false,
+    "baseUrl": ".",
+    "rootDir": "src",
+    "outDir": "dist/",
+    "paths": {
+      "@/*": ["src/*"],
+      "@type/*": ["src/core/types/*"],
+      "@run/*": ["src/core/run/*"],
+      "@config/*": ["src/core/config/*"],
+      "@controller/*": ["src/core/controller/*"],
+      "@utils/*": ["src/core/utils/*"],
+      "@net/*": ["src/core/net/*"],
+      "@model/*": ["src/core/model/*"],
+      "@ipc/*": ["src/core/ipc/*"],
+      "@service/*": ["src/core/service/*"],
+      "@interactive/*": ["src/core/interactive/*"],
+      "@img/*": ["src/application/assets/img/*"],
+      "@annotation/*": ["src/core/annotation/*"]
+    },
+    "lib": [
+      "esnext",
+      "dom",
+      "dom.iterable",
+      "scripthost"
+    ]
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "tests/**/*.ts",
+    "tests/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

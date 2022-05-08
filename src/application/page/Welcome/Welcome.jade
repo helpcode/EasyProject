@@ -1,0 +1,18 @@
+extends ../../layout/index
+
+block title
+
+    title #{title}
+    link(rel='stylesheet', href='../../assets/css/Welcome.css')
+
+block content
+    #app
+        .welcome
+            .title Easy Project
+            .version V0.01
+            img.logo(src="../../assets/img/project_1.png")
+            .desc 统一管理组织凌乱无序的软件项目，带来一站式的快感。
+            el-button.nodrag(type="text" @click="OpenHome") 开始使用
+
+block script
+    script(src="../../assets/js/page/Welcome.js")

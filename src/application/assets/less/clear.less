@@ -1,0 +1,143 @@
+@import "color";
+
+html, body {
+  width: 100%;
+  height: 100%;
+  -webkit-app-region: drag;
+  margin: 0;
+}
+
+ul, li, h1,h2,h3,h4,h5,h6,p{
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+a {
+  text-decoration: none;
+}
+
+input {
+  border: none;
+  outline: none;
+  background: #fff0;
+  padding: 0;
+  cursor: pointer;
+}
+
+//复写ui框架的样式
+.el-tabs__nav-wrap::after,
+.el-tabs__active-bar {
+  height: 1px !important;
+}
+
+.is-dark {
+  background: var(--fill-color) !important;
+}
+
+.el-input__inner,
+.el-button {
+  border: none !important;
+}
+
+.el-tabs {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+
+.el-tabs__content {
+  flex: 1;
+  overflow-y: scroll !important;
+}
+.icon {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  fill: currentColor;
+  overflow: hidden;
+}
+
+.el-dropdown {
+  color: inherit !important;
+}
+.el-message-box,
+.el-dialog {
+  border-radius: 10px !important;
+}
+.v-modal {
+  width: calc(100% - 15px) !important;
+  height: calc(100% - 15px) !important;
+  border-radius: 10px !important;
+}
+
+.el-tabs__item:focus.is-active.is-focus:not(:active) {
+  box-shadow: none !important;
+}
+
+.el-tabs__item.is-active,
+.el-tabs__item:hover{
+  color: var(--fill-color) !important;
+}
+.el-tabs__active-bar {
+  background-color: var(--fill-color) !important;
+}
+.el-checkbox {
+  .el-checkbox__label {
+    color: var(--fill-color) !important;
+  }
+}
+.el-checkbox__input.is-checked .el-checkbox__inner,
+.el-checkbox__input.is-indeterminate .el-checkbox__inner {
+  background-color: var(--fill-color) !important;
+  border-color: var(--fill-color) !important;
+}
+
+.el-checkbox__input.is-focus .el-checkbox__inner,
+.el-checkbox__inner:hover {
+  border-color: var(--fill-color) !important;
+}
+
+.nodata {
+  text-align: center;
+  margin-top: 22px;
+  color: @textColor;
+}
+
+//不可以拖动也不可以选中文字
+.nodragText {
+  -webkit-user-select: none;
+  -webkit-app-region: no-drag;
+}
+
+//不可以拖动
+.nodrag {
+  -webkit-app-region: no-drag;
+}
+
+//可以拖动
+.drag {
+  -webkit-app-region: drag !important;
+}
+
+// 页面切换动画
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .5s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
+}
+
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+.padding30 {
+  padding: 30px 30px 0px 30px;
+  box-sizing: border-box;
+}
+
+#app {
+  height: 100%;
+}

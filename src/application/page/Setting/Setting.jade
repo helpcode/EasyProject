@@ -1,0 +1,91 @@
+.Setting
+  .title
+    i(class="el-icon-arrow-left" @click="$router.back()")
+    span 偏好设置
+  div.warp
+    .warp_title
+      span 主题设置
+      //- span.custom 自定义
+    ul.theme_list
+      li(v-for="(item,index) in $store.getters.get_list"
+        @click="changeTheme(index)"
+        v-bind:style="{ background : item.BgColor, color : item.textColor }")
+        span {{ item.text }}
+        i.el-icon-circle-close(v-if="item.system" title="删除" @click.stop="deleteTheme(item,index)")
+        .back(v-bind:style="{ background : item.activeBgColor }")
+
+      el-popover(class="add" placement='bottom-start', title='注意（必看）：', width='280', trigger='hover')
+        div 1：建议使用竖图尺寸壁纸，显示效果最佳
+        div 2：本地图片改文件名为主题名，长度<=8
+        div 3：本地图片上传后，勿要再移动图片位置
+        div 4：自定义主题不会上传您的图片，请安心
+        .custom(slot='reference' @click="isShowDialog = true")
+           i.el-icon-plus
+    .login_start
+      span 开启透明度：
+      el-checkbox(v-model='$store.state.mask.open'
+        @change="openChange"
+        v-bind:style="{'--fill-color': $store.getters.get_list[$store.getters.get_theme].type == 'color' ? $store.getters.get_list[$store.getters.get_theme].BgColor : $store.getters.get_list[$store.getters.get_theme].activeBgColor }")
+
+      el-slider(v-if="$store.state.mask.open"
+        class="silder_opacity"
+        input-size="mini"
+        @input="change('opacity')"
+        v-bind:style="{'--fill-color': $store.getters.get_list[$store.getters.get_theme].type == 'color' ? $store.getters.get_list[$store.getters.get_theme].BgColor : $store.getters.get_list[$store.getters.get_theme].activeBgColor }"
+        v-bind:max="1"
+        tooltip-class="tooltip"
+        v-bind:step="0.025"
+        v-model='$store.state.mask.opacity')
+
+    .login_start
+      span(style="margin-right: 9px;") 背景模糊度：
+      el-slider(class="silder_opacity"
+        input-size="mini"
+        @input="change('blur')"
+        v-bind:style="{'--fill-color': $store.getters.get_list[$store.getters.get_theme].type == 'color' ? $store.getters.get_list[$store.getters.get_theme].BgColor : $store.getters.get_list[$store.getters.get_theme].activeBgColor }"
+        v-bind:max="20"
+        tooltip-class="tooltip"
+        v-bind:step="0.025"
+        v-model='$store.state.mask.blur')
+
+  div.warp
+    .warp_title 系统设置
+    .login_start
+      span 是否开机自启：
+      el-checkbox(v-model='$store.state.isOpen' v-bind:key="$store.getters.get_theme"
+        @change="changeIsOpen"
+        v-bind:style="{'--fill-color': $store.getters.get_list[$store.getters.get_theme].type == 'color' ? $store.getters.get_list[$store.getters.get_theme].BgColor : $store.getters.get_list[$store.getters.get_theme].activeBgColor }")
+
+  el-dialog.custom_dialog(title='自定义主题', :visible.sync='isShowDialog', width='80%')
+    .custom_wrap
+      .action(v-if="/^#/.test(custom.BgColor)")
+        .upload_local
+          input(type="file" @change="uploadFile")
+          i.el-icon-upload2
+          p 本地上传
+
+        .upload_network
+          el-popover(placement='left', width='180', v-model='visible')
+            el-input(v-model='networkURL', clearable, placeholder='粘贴图片地址'
+            @input="networkChange")
+            div(slot='reference')
+              i.el-icon-upload
+              p 网络上传
+
+      el-image(style="width: 100%;height: 100%;" v-else v-bind:src='custom.BgColor | ', fit='cover')
+
+    .custom_footer
+      .left
+        .color_block
+          span 文字色
+          input(type="color"
+            v-bind:value="custom.textColor"
+            v-model="custom.textColor")
+        .color_block
+          span 激活背景色
+          input(type="color" v-bind:value="custom.activeBgColor" v-model="custom.activeBgColor")
+      .right
+        el-button(@click='reselect') 重新选图
+        el-button(type='primary', @click='completeSelection') 完成选择
+
+  link(rel='stylesheet', href='../../assets/css/Setting.css')

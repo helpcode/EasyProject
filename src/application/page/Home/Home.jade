@@ -1,0 +1,80 @@
+extends ../../layout/index
+
+block title
+
+    title #{title}
+    link(rel='stylesheet', href='../../assets/css/Home.css')
+    link(rel='stylesheet', href='../../assets/css/xterm.css')
+
+block content
+    #app(v-cloak)
+        .home
+          .project_list.nodrag
+              .mask(v-bind:style="{ background : $store.getters.get_list[$store.getters.get_theme].BgColor, filter: `blur(${$store.state.mask.blur}px)`}")
+              .back(v-if="$store.getters.get_list[$store.getters.get_theme].type == 'img' && $store.state.mask.open " v-bind:style="{ background: `rgba(0,0,0,${$store.state.mask.opacity})` }")
+              ul.list_item.nodrag
+                  li(:title="v.FolderName" v-bind:style="{ color : $store.getters.get_list[$store.getters.get_theme].textColor, background: i == clickProjectIndex ? $store.getters.get_list[$store.getters.get_theme].activeBgColor : '' }"
+                      @click="openInfo(v,i)"
+                      v-for="(v,i) in $store.getters.GET_PROJECT")
+                    .left
+                        img(v-if="v.FolderIcon.includes('.png')"
+                            src="../../assets/img/GenericFolder.png")
+
+                        svg.icon(v-else="" aria-hidden='true' @click.stop="OpenPropject('cmd', v)" title="在终端打开")
+                            use(v-bind:xlink:href='v.FolderIcon')
+                        | {{ v.FolderName }}
+
+                    .right(v-if="i == clickProjectIndex" @click.stop="")
+                        svg.icon(aria-hidden='true' @click.stop="OpenPropject('file', v)" title="在文件管理打开")
+                            use(xlink:href='#icon-wenjianjia2')
+                        svg.icon(aria-hidden='true' @click.stop="OpenPropject('cmd', v)" title="在终端打开")
+                          use(xlink:href='#icon-config-command')
+
+                        el-dropdown(size="medium" @command="ShowActionClick")
+                            svg.icon(aria-hidden='true')
+                                use(xlink:href='#icon-gengduo')
+
+                            el-dropdown-menu(slot='dropdown')
+                                el-dropdown-item(v-for="(item,index) in MoreList" v-bind:icon="item.icon" v-bind:key="index"
+                                    v-bind:command="[ v.FolderName, item.id ]") {{ item.title }}
+
+              .addfile(v-bind:style="{ color : $store.getters.get_list[$store.getters.get_theme].textColor}")
+                .left(@click="ChoiceFile")
+                    i.el-icon-circle-plus-outline
+                    span 导入项目
+                i.el-icon-setting(@click="$router.push('/setting')")
+
+          // 需要根据当前是否全屏，动态添加类名。同时 因为全屏后左下角是直角，所以需要动态判断处理圆角
+          .project_info.nodrag(v-bind:class=" menuStatus ? 'full' : 'half' "
+          v-bind:style="{ 'border-bottom-left-radius': menuStatus ? '10px': '0px' }")
+
+             keep-alive
+               transition(name="fade")
+                 router-view(v-if="$route.meta.keepAlive" class="padding30")
+             router-view(v-if="!$route.meta.keepAlive" class="padding30")
+             //全屏箭头
+             .full_screen
+               svg.icon(aria-hidden='true' v-bind:style="{ transform : `rotate(${menuIconRotate}deg)`}"
+                   @mouseover="Mouseover"
+                   @click="changeMenu"
+                   @mouseout="Mouseover")
+                 use(xlink:href='#icon-jinru')
+          .td.drag
+        el-dialog.nodrag(title=""
+            v-bind:close-on-click-modal="false"
+            v-bind:visible.sync="isEditDialog")
+            el-input(v-model="EditProjectName" placeholder="请输入新的文件夹名称")
+            .dialog-footer(slot='footer')
+                el-button(@click='SubmitEdit' round) 确 定
+
+        el-dialog.nodrag(title="请选择项目图标" v-bind:visible.sync="isIconDialog")
+            el-row
+                el-col.chiicon(v-bind:span="6"
+                    v-for="(item,index) in IconList"
+                    v-bind:title="item.title")
+                    svg.icon(aria-hidden='true' @click="SelectIcon(item)")
+                        use(v-bind:xlink:href="item.icon")
+
+
+block script
+    script(src="../../assets/js/page/Home.js")
