@@ -1,4 +1,4 @@
-const {ipcRenderer} = require("electron");
+const {ipcRenderer,app} = require("electron");
 
 
 module.exports = {
@@ -19,7 +19,6 @@ module.exports = {
     }
   },
   created() {
-    console.log("setting: ", config)
   },
   methods: {
     // 开启透明度 的  checkbox 被选择的时候
@@ -33,10 +32,6 @@ module.exports = {
 
     // slider 滑动的时候 改变 body 上的 style
     change(e) {
-      // console.log("slider  slider  e: ", e)
-      console.log(e == "opacity"
-        ? this.$store.state.mask.opacity
-        : this.$store.state.mask.blur)
       ipcRenderer.send('setSettingConfig', {
         action: '更新 透明的的数值',
         keyName: e == "opacity"

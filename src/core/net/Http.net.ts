@@ -29,7 +29,6 @@ export class Http {
      * @constructor
      */
     public async GET(params: RequestParams): Promise<any> {
-        console.log("GET params: ", params)
         if (params.custom !== undefined) {
             Axios.defaults.baseURL = params.custom
         }

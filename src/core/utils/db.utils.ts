@@ -63,6 +63,10 @@ class Db {
         return this.db.get(table).find({ [ key ]: name }).value()
     }
 
+    public isHaveName(name: string, table: string = "projects"): { [key: string]: any} {
+        return this.db.get(table).find({ "name": name }).value()
+    }
+
     /**
      * 获取所有项目
      */

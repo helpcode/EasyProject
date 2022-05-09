@@ -19,6 +19,7 @@ let Home = new Vue({
     // 选择主题的下标
     selectThemeIndex: 0,
 
+    // 你点击的项目下标
     clickProjectIndex: -1,
 
     // 保存 重命名项目 的输入值
@@ -50,12 +51,22 @@ let Home = new Vue({
     ]
   },
   created() {
+    // 调用升级检测
     this.onMainWebContents();
     this.GetProjectList()
   },
   mounted() {
+    setTimeout(() =>
+      this.$store.dispatch('checkUpdate','default'), 2000)
   },
   methods: {
+    downNowDmg(url) {
+      ipcRenderer.sendSync('openExternal', {
+        action: '浏览器打开',
+        url: url,
+      });
+    },
+    // 帮设置页面提前获取当前应用版本号
     changeMenu() {
       if (this.menuStatus) {
         this.menuStatus = false
@@ -80,15 +91,17 @@ let Home = new Vue({
         this.$router.push("/setting")
       })
 
+      let result = ipcRenderer.sendSync('getVersion', {
+        action: '获取设置页面的当前版本号'
+      });
+      this.$store.commit('set_vsersion', result.version);
+
       let res = ipcRenderer.sendSync('getSettingConfig', {
         action: '获取设置页面配置参数'
       });
 
       // 把从json数据库中获取到的配置向 vuex 中合并
       this.$store.replaceState(Object.assign({},this.$store.state,res))
-
-      console.log("设置页面参数为：", this.$store.state)
-
     },
     openInfo(v,i) {
       this.clickProjectIndex = i;
@@ -122,7 +135,7 @@ let Home = new Vue({
               action: '从列表移除',
               name: this.CurrentProjectName,
             });
-            this.GetProjectList()
+            this.removeProjectItem();
           }).catch((action) => {
             if (action == "cancel") {
               this.$confirm('此操作将永久删除项目，您确定进行此操作？', '删除提示', {
@@ -139,7 +152,7 @@ let Home = new Vue({
                 } else {
                   this.$notify.error({ title: '提示', message: status, type: 'error' });
                 }
-                this.GetProjectList()
+                this.removeProjectItem();
               }).catch(() => {});
             }
           });
@@ -153,20 +166,39 @@ let Home = new Vue({
       }
     },
 
+
+    /**
+     * 从列表删除  和 从 磁盘删除，需要减少列表数据
+     */
+    removeProjectItem() {
+      let list = this.$store.getters.GET_PROJECT.filter((v,i) => {
+        if (i != this.clickProjectIndex) {
+          return v;
+        }
+      });
+
+      this.$store.commit('SET_LIST', {
+        res: list,
+        type: "ProjectList"
+      })
+    },
+
     /**
      * 选择图标
      * @param item
      * @constructor
      */
     SelectIcon(item) {
+      this.$store.getters.GET_PROJECT[this.clickProjectIndex].FolderIcon = item.icon
       let status = ipcRenderer.sendSync('ChangeIcon', {
         action: '修改项目图标',
         name: this.CurrentProjectName,
         newIcon: item.icon
       });
+
       if (status == "success") {
         this.isIconDialog = false;
-        this.GetProjectList()
+        // TODO 问题2 this.GetProjectList()
       }
     },
 
@@ -176,14 +208,15 @@ let Home = new Vue({
      */
     SubmitEdit() {
       if (this.EditProjectName.length != 0) {
+        this.$store.getters.GET_PROJECT[this.clickProjectIndex].name = this.EditProjectName
         let status = ipcRenderer.sendSync('reNameProject', {
           action: '重命名项目',
           oldName: this.CurrentProjectName,
           newName: this.EditProjectName
         });
         if (status == "success") {
+          this.EditProjectName = ""
           this.isEditDialog = false;
-          this.GetProjectList()
         }
       }
     },
@@ -201,9 +234,16 @@ let Home = new Vue({
      * @constructor
      */
     ChoiceFile() {
-      this.$store.commit('SET_LIST', ipcRenderer.sendSync('openDirectory', {
+      let list = ipcRenderer.sendSync('openDirectory', {
         action: '选择项目'
-      }))
+      })
+      if (list != undefined) {
+        console.log("导入项目：", list)
+        this.$store.commit('SET_LIST', {
+          res: list,
+          type: 'ChoiceFile'
+        });
+      }
     },
 
     /**
@@ -218,7 +258,10 @@ let Home = new Vue({
       // 如果没有项目列表了，那么就不需要展示项目详情页面
       list.length == 0 ? this.$router.push("/") : ""
       // 请求到的数据存入vuex中
-      this.$store.commit('SET_LIST', list)
+      this.$store.commit('SET_LIST', {
+        res: list,
+        type: "ProjectList"
+      })
     },
   },
   computed: {

@@ -5,8 +5,14 @@ Vue.use(Vuex)
 const store = new Vuex.Store({
   state: {
     ProjectList: [],
+    currentVsersion: null, // 保存当前版本号
+    isUpdate: false, // 决定 升级弹窗是否显示,
+    updateInfo: {}// 如果需要升级，那么这里面保存的就是升级的一些详细信息
   },
   getters: {
+    get_vsersion: state => {
+      return state.currentVsersion;
+    },
     get_isOpen: state => {
       return state.isOpen;
     },
@@ -25,15 +31,28 @@ const store = new Vuex.Store({
       console.log(a.TaskRunList.find(v => v.ScriptName = currentScript))
     },
     GET_CURRENTTASK: (state) => (id) => {
-      let a = state.ProjectList.find(v => v.FolderName == id)
-      return a.TaskRunList;
+     try {
+       let a = state.ProjectList.find(v => v.FolderName == id)
+       return a.TaskRunList;
+     } catch (e) {}
     },
     GET_DEPENDENTLIST: (state) => (id) => {
-      let a = state.ProjectList.find(v => v.FolderName == id)
-      return a.DependentList;
+      try {
+        let a = state.ProjectList.find(v => v.FolderName == id)
+        return a.DependentList;
+      } catch (e) {}
     }
   },
   mutations: {
+    set_isUpdate(state, status) {
+      state.isUpdate = status
+    },
+    set_updateInfo(state, info) {
+      state.updateInfo = info
+    },
+    set_vsersion(state, vsersion) {
+      state.currentVsersion = vsersion
+    },
     set_isOpen(state, status) {
       state.isOpen = status
     },
@@ -55,8 +74,12 @@ const store = new Vuex.Store({
     },
     // 保存项目的数据
     SET_LIST(state, data) {
-      if (data) {
-        state.ProjectList = data;
+      if (data.type == "ChoiceFile") {
+        state.ProjectList.push(data.res);
+      } else {
+        if (data.res) {
+          state.ProjectList = data.res;
+        }
       }
     },
     // 进入详情页后，点击 任务，将从后端获取到的项目script命令
@@ -87,7 +110,24 @@ const store = new Vuex.Store({
       })
     }
   },
-  actions: {},
+  actions: {
+    checkUpdate({ commit }, type) {
+      let res = ipcRenderer.sendSync('checkUpdate', {
+        action: '检查新版本更新',
+      });
+      if (res.isUpdate) {
+        commit("set_updateInfo", res)
+        commit("set_isUpdate", res.isUpdate)
+      } else {
+        if (type != "default")
+        ELEMENT.Notification({
+          title: '检查升级',
+          message: '已是最新版本，无需升级',
+          type: 'warning'
+        });
+      }
+    }
+  },
   modules: {}
 })
 

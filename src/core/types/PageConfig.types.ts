@@ -3,7 +3,7 @@ import { BrowserWindowConstructorOptions } from "electron";
 export interface PagePath {
   Welcome?: String,
   Home?: String,
-  PlugInfo?: String,
+  PlugInfo?: String
 }
 
 export interface PageSize {

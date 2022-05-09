@@ -8,7 +8,9 @@ class Windows {
 
     private _CurrentWindowNew!: any;
 
+    // @ts-ignore
     private _HomeBrowserWindowWebContents!: typeof WebContents;
+    // @ts-ignore
     private _SettingBrowserWindowWebContents!: typeof WebContents;
 
     get CurrentWindowNew(): any {
@@ -45,18 +47,22 @@ class Windows {
         this._SettingBrowserWindow = value;
     }
 
+    // @ts-ignore
     get HomeBrowserWindowWebContents(): typeof WebContents {
         return this._HomeBrowserWindowWebContents;
     }
 
+    // @ts-ignore
     set HomeBrowserWindowWebContents(value: typeof WebContents) {
         this._HomeBrowserWindowWebContents = value;
     }
 
+    // @ts-ignore
     get SettingBrowserWindowWebContents(): typeof WebContents {
         return this._SettingBrowserWindowWebContents;
     }
 
+    // @ts-ignore
     set SettingBrowserWindowWebContents(value: typeof WebContents) {
         this._SettingBrowserWindowWebContents = value;
     }

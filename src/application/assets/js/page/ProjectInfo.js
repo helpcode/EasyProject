@@ -245,10 +245,6 @@ module.exports = {
           }
         });
         let res = curr[0]
-        // let res = this.CurrentTask(arg.ScriptName);
-        console.log("arg.ScriptName: ", arg.ScriptName)
-        console.log("GetShellMessage: ", res)
-        console.log("arg.log: ", arg.log)
         res.RunLogs += arg.log;
         res.pid = arg.pid;
         this.setContent(res.Terminal, arg.log)
@@ -261,13 +257,14 @@ module.exports = {
     onClose() {
       let closeCallback = async (event, arg) => {
         let e = this.$store.getters.GET_CURRENTTASK(arg.projectName)
+        console.log("***监听进程关闭的通知****: ", e)
         let curr = e.filter(v => {
           if (v.ScriptName == arg.ScriptName) {
             return v;
           }
         });
         let res = curr[0]
-
+        res.lock = true;
         res.pid = 0;
         res.IsRuning = "idle";
         res.RunLogs += "进程已结束...";
@@ -298,6 +295,7 @@ module.exports = {
      * @constructor
      */
     StopCmd(item) {
+      item.lock = false;
       let StopStatus = ipcRenderer.send('StopCmd', {
         action: '运行项目',
         name: this.projectName,
@@ -320,13 +318,15 @@ module.exports = {
      * @constructor
      */
     RunCmd(item) {
-      item.IsRuning = "runing";
-      this.initTerminal(item);
-      ipcRenderer.send('RunCmd', {
-        action: '运行项目',
-        name: this.projectName,
-        ScriptName: item.ScriptName
-      });
+      if (item.lock) {
+        item.IsRuning = "runing";
+        this.initTerminal(item);
+        ipcRenderer.send('RunCmd', {
+          action: '运行项目',
+          name: this.projectName,
+          ScriptName: item.ScriptName
+        });
+      }
     },
 
     /**
@@ -612,7 +612,6 @@ module.exports = {
     async isHasTerminal() {
       await this.$nextTick()
       let el = document.querySelector(`.${this.projectName}_${this.currentSrcipt}`);
-      console.log("判断是否有终端的html ", el && el.children.length == 0 ? false : true);
       // 返回 true 表示有终端，false 表示没有
       return el && el.children.length == 0 ? false : true
     },
@@ -626,8 +625,6 @@ module.exports = {
     // 返回当前你打开的命令
     CurrentTask() {
       return ScriptName => {
-
-        console.log("this.CurrentTaskList =-------------- : ", this.CurrentTaskList)
         let curr = this.CurrentTaskList.filter(v => {
           if (v.ScriptName == ScriptName) {
             return v;

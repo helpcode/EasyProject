@@ -1,16 +1,16 @@
-import {ipcMain} from "electron";
-import {Dialog} from "@interactive/Dialog.interactive";
-import {Inject} from "@annotation/Ioc.annotation";
-import {Http} from "@net/Http.net";
+import { app, ipcMain } from "electron";
+import { Dialog } from "@interactive/Dialog.interactive";
+import { Inject } from "@annotation/Ioc.annotation";
+import { Http } from "@net/Http.net";
 import Utils from "@utils/Index.utils";
 import JsonDB from "@utils/db.utils";
-import {existsSync, readJsonSync, remove} from "fs-extra";
-import {createRequire} from "module"
-import {exec, spawn} from "child_process";
+import { existsSync, readJsonSync, remove } from "fs-extra";
+import { createRequire } from "module"
+import { exec, spawn } from "child_process";
 import Config from "@config/Index.config";
 import kill from "tree-kill";
-import {resolve} from "path";
-import {ProcessUtils} from "@utils/process.utils";
+import { basename, dirname, resolve } from "path";
+import { ProcessUtils } from "@utils/process.utils";
 
 export class FileChice {
 
@@ -21,12 +21,33 @@ export class FileChice {
   private readonly _process: ProcessUtils = new ProcessUtils();
 
   sendSettingConfig() {
+    ipcMain.on("checkUpdate", async (event, args) => {
+      let res = await this._Net.GET({ url: Config.UpdateUrl, custom: undefined });
+      let returnVal: any = {}
+      // 如果需要更新
+      if (Utils.compare(res.tag_name, app.getVersion())) {
+        returnVal.isUpdate = true;
+        returnVal.detailed = res.body.split("\r\n");
+        returnVal.version = res.tag_name;
+        returnVal.title = res.name;
+        returnVal.down = res.assets[ 0 ].browser_download_url;
+        returnVal.updatedTime = res.assets[ 0 ].updated_at;
+      } else {
+        returnVal.isUpdate = false;
+      }
+      event.returnValue = returnVal
+    })
+
+    ipcMain.on("getVersion", async (event, args) => {
+      event.returnValue = { version: app.getVersion() }
+    })
+
     ipcMain.on("delete_themeList", async (event, args) => {
-      event.returnValue = JsonDB.remove(args.value, `setting.${args.keyName}`)
+      event.returnValue = JsonDB.remove(args.value, `setting.${ args.keyName }`)
     })
 
     ipcMain.on("push_themeList", async (event, args) => {
-      event.returnValue = JsonDB.saveProject(args.value, `setting.${args.keyName}`)
+      event.returnValue = JsonDB.saveProject(args.value, `setting.${ args.keyName }`)
     })
 
     ipcMain.on("getSettingConfig", async (event, args) => {
@@ -35,6 +56,19 @@ export class FileChice {
 
     ipcMain.on("setSettingConfig", async (event, args) => {
       JsonDB.update(args.keyName, args.value)
+      if (args.keyName == "isOpen") {
+        const appFolder = dirname(process.execPath)
+        const updateExe = resolve(appFolder, '..', 'EasyProject.app')
+        const exeName = basename(process.execPath)
+        app.setLoginItemSettings({
+          openAtLogin: args.value,
+          path: updateExe,
+          args: [
+            '--processStart', `"${ exeName }"`,
+            '--process-start-args', `"--hidden"`
+          ]
+        });
+      }
       // event.returnValue = JsonDB.project("setting")
     })
   }
@@ -50,7 +84,7 @@ export class FileChice {
   setPackageJson() {
     ipcMain.on("setPackageJson", async (event, args) => {
       let pkg = JsonDB.findName(args.project);
-      let packagePath = `${pkg.Fullpath}/package.json`;
+      let packagePath = `${ pkg.Fullpath }/package.json`;
       Utils.writePackage(packagePath, args.code)
     })
   }
@@ -58,7 +92,7 @@ export class FileChice {
   getPackageJson() {
     ipcMain.on("getPackageJson", async (event, args) => {
       let pkg = JsonDB.findName(args.project);
-      let packagePath = `${pkg.Fullpath}/package.json`;
+      let packagePath = `${ pkg.Fullpath }/package.json`;
       try {
         event.returnValue = Utils.readPackage(packagePath)
       } catch (e) {
@@ -74,7 +108,7 @@ export class FileChice {
         message: "选择下载路径",
         buttonLabel: '亲，点我确认选择！',
         filters: [
-          {name: 'All', extensions: ['*']},
+          { name: 'All', extensions: [ '*' ] },
         ],
         properties: [
           'openDirectory',
@@ -91,8 +125,8 @@ export class FileChice {
     ipcMain.on("installPlug", async (event, args) => {
       let pkg = JsonDB.findName(args.project);
       let cmd = args.status == 0
-        ? `cd ${pkg.Fullpath} && npm i --save ${args.name}`
-        : `cd ${pkg.Fullpath} && npm i --save-dev ${args.name}`;
+        ? `cd ${ pkg.Fullpath } && npm i --save ${ args.name }`
+        : `cd ${ pkg.Fullpath } && npm i --save-dev ${ args.name }`;
 
       exec(cmd, (error, stdout, stderr) => {
         if (error == null) {
@@ -107,7 +141,7 @@ export class FileChice {
   removeListProject() {
     // 从项目列表删除项目
     ipcMain.on("removeListProject", async (event, args) => {
-      let a = JsonDB.remove({FolderName: args.name});
+      let a = JsonDB.remove({ FolderName: args.name });
       if (a != undefined) {
         event.returnValue = "success"
       } else {
@@ -124,7 +158,7 @@ export class FileChice {
         // 从磁盘删除
         await remove(resolve(project.Fullpath));
         // 从本地数据库删除
-        JsonDB.remove({FolderName: args.name});
+        JsonDB.remove({ FolderName: args.name });
         event.returnValue = "success"
       } catch (err) {
         event.returnValue = err.message
@@ -139,8 +173,8 @@ export class FileChice {
   reNameProject() {
     ipcMain.on("reNameProject", async (event, args) => {
       JsonDB.db.get('projects')
-        .find({FolderName: args.oldName})
-        .assign({FolderName: args.newName})
+        .find({ name: args.oldName })
+        .assign({ name: args.newName })
         .write()
       event.returnValue = "success"
     });
@@ -149,8 +183,8 @@ export class FileChice {
   changeIcon() {
     ipcMain.on("ChangeIcon", async (event, args) => {
       JsonDB.db.get('projects')
-        .find({FolderName: args.name})
-        .assign({FolderIcon: args.newIcon})
+        .find({ FolderName: args.name })
+        .assign({ FolderIcon: args.newIcon })
         .write()
       event.returnValue = "success"
     })
@@ -164,10 +198,10 @@ export class FileChice {
       let DirectoryPath = await Dialog.showDialog({
         message: "选择您的项目",
         buttonLabel: '导入项目',
-        properties: ['openDirectory', 'showHiddenFiles']
+        properties: [ 'openDirectory', 'showHiddenFiles' ]
       });
       if (DirectoryPath) {
-        let res = await Utils.GetPathFileList(DirectoryPath[0]);
+        let res = await Utils.GetPathFileList(DirectoryPath[ 0 ]);
         event.returnValue = res
       } else {
         event.returnValue = undefined
@@ -180,9 +214,9 @@ export class FileChice {
       let currentTask: any = Utils.findOneTask(args);
       if (Config.isWindows) {
         try {
-          spawn('taskkill', ['/T', '/F', '/PID', currentTask.Child.pid.toString()], {
+          spawn('taskkill', [ '/T', '/F', '/PID', currentTask.Child.pid.toString() ], {
             cwd: currentTask.path,
-            stdio: ['pipe', 'pipe', 'ignore']
+            stdio: [ 'pipe', 'pipe', 'ignore' ]
           });
           event.returnValue = null
         } catch (e) {
@@ -209,46 +243,43 @@ export class FileChice {
       let currentTask: any = Utils.findOneTask(args);
 
       let cmd = args.ScriptName == 'install'
-        ? `cd ${currentTask.path} && npm install`
-        : `cd ${currentTask.path} && npm run ${currentTask.ScriptName}`;
+        ? `cd ${ currentTask.path } && npm install`
+        : `cd ${ currentTask.path } && npm run ${ currentTask.ScriptName }`;
 
       try {
         currentTask.Child = spawn(cmd, {
           cwd: process.cwd(),
-          stdio: ['inherit', 'pipe', 'pipe'],
+          stdio: [ 'inherit', 'pipe', 'pipe' ],
           shell: true
         });
-
-        console.log("currentTask: ", currentTask);
-
         // 修改运行状态
         currentTask.IsRuning = "runing"
 
         currentTask.Child.stdout.on('data', (data: Buffer) => {
-          currentTask.RunLogs += data.toString();
-          currentTask.pid = currentTask.Child.pid;
 
-          // 后端返回 ScriptName 为前端助力，让前端的 sendMessage 监听
-          // 中知道把 log 日志存放到数组的哪个 v.Terminal 中
-          event.sender.send('sendMessage', {
-            log: data.toString(),
-            projectName: args.name,
-            ScriptName: currentTask.ScriptName,
-            pid: currentTask.Child.pid
-          })
+          currentTask.RunLogs += data.toString();
+          if (currentTask.Child != null) {
+            currentTask.pid = currentTask.Child.pid;
+            // 后端返回 ScriptName 为前端助力，让前端的 sendMessage 监听
+            // 中知道把 log 日志存放到数组的哪个 v.Terminal 中
+            event.sender.send('sendMessage', {
+              log: data.toString(),
+              projectName: args.name,
+              ScriptName: currentTask.ScriptName,
+              pid: currentTask.Child.pid
+            })
+          }
         });
 
         // 命令自动运行完成的时候，向前端发送进程关闭的通知
-        currentTask.Child.stdout.on('close', (code: Number) => {
+        currentTask.Child.stdout.on('close', (code: Number, signal: string) => {
+          console.log("5 进程结束")
 
           currentTask.pid = 0;
           // 关闭进程
           currentTask.IsRuning = "idle"
           currentTask.RunLogs = ""
           currentTask.Child = null;
-
-          console.log("close 进程: ", currentTask)
-
 
           event.sender.send('close', {
             ScriptName: currentTask.ScriptName,
@@ -272,20 +303,30 @@ export class FileChice {
     ipcMain.on("GetTaskList", async (event, args) => {
       let project = JsonDB.findName(args.name);
 
-      let scriptList = (Utils.readPackage(`${project.Fullpath}/package.json`)).scripts;
+      let scriptList = (Utils.readPackage(`${ project.Fullpath }/package.json`)).scripts;
       let NewSrciptList = []
       for (const key in scriptList) {
         NewSrciptList.push({
+          /**
+           * 进程状态锁
+           * true 表示命令未运行（进程停止时会变为true），前端运行按钮可以点击，
+           * false 在你点击停止按钮后，进程还未被完全杀死前，再次点击运行按钮将无反应
+           * 必须等待进程被完全杀死后，运行按钮才能再次使用
+           * 如果不加锁，在前端 急速反复点击 运行停止按钮 的时候
+           * 会导致进程运行后直接闪退，Mccos上存在
+           */
+          lock: true,
           ScriptName: key, // 命令的名称
           IsRuning: "idle", // idle 未运行  runing 运行
           RunLogs: '', // 命令运行产生的日志
-          ScriptShell: scriptList[key], // 命令的脚本
+          ScriptShell: scriptList[ key ], // 命令的脚本
           Terminal: null,
           Child: null,
           pid: 0
         })
       }
       NewSrciptList.unshift({
+        lock: true,
         ScriptName: 'install',
         IsRuning: "idle",
         RunLogs: '',
@@ -319,25 +360,25 @@ export class FileChice {
   GetDependentList() {
     ipcMain.on("GetDependentList", async (event, args) => {
       let project = JsonDB.findName(args.name);
-      let pkg = Utils.readPackage(`${project.Fullpath}/package.json`);
-      let ListArr: { title: string, list: { [key: string]: any }[] }[] = [];
+      let pkg = Utils.readPackage(`${ project.Fullpath }/package.json`);
+      let ListArr: { title: string, list: { [ key: string ]: any }[] }[] = [];
       // 头像地址：https://avatars.dicebear.com/v2/identicon/插件名.svg
       // 请求地址：https://registry.npmjs.org/插件名
-      [pkg.dependencies, pkg.devDependencies].forEach((v, i) => {
-        ListArr.push({title: i == 0 ? '生产环境依赖' : '开发环境依赖', list: []})
+      [ pkg.dependencies, pkg.devDependencies ].forEach((v, i) => {
+        ListArr.push({ title: i == 0 ? '生产环境依赖' : '开发环境依赖', list: [] })
         for (const key in v) {
           try {
-            let ProjectPackage = `${project.Fullpath}/package.json`,
-              resolvedPath = createRequire(ProjectPackage).resolve(`${key}/package.json`);
+            let ProjectPackage = `${ project.Fullpath }/package.json`,
+              resolvedPath = createRequire(ProjectPackage).resolve(`${ key }/package.json`);
             if (existsSync(resolvedPath)) {
               const modeulePackage = readJsonSync(resolvedPath);
 
-              ListArr[i].list.push({
+              ListArr[ i ].list.push({
                 name: key,
-                logoImg: `https://avatars.dicebear.com/v2/identicon/${key.replace("/", "-")}.svg`,
-                currentVersion: v[key],
+                logoImg: `https://avatars.dicebear.com/v2/identicon/${ key.replace("/", "-") }.svg`,
+                currentVersion: v[ key ],
                 description: modeulePackage.description,
-                website: modeulePackage.homepage || (modeulePackage.repository && modeulePackage.repository.url) || `https://www.npmjs.com/package/${key.replace('/', '%2F')}`
+                website: modeulePackage.homepage || (modeulePackage.repository && modeulePackage.repository.url) || `https://www.npmjs.com/package/${ key.replace('/', '%2F') }`
               })
             }
 
@@ -357,7 +398,7 @@ export class FileChice {
   updateDependencies() {
     ipcMain.on("uDependencies", async (event, args) => {
       let cmd, pkg = JsonDB.findName(args.project);
-      args.type == 0 ? cmd = `cd ${pkg.Fullpath} && npm i --save ${args.name}@latest` : cmd = `cd ${pkg.Fullpath} && npm i --save-dev ${args.name}@latest`;
+      args.type == 0 ? cmd = `cd ${ pkg.Fullpath } && npm i --save ${ args.name }@latest` : cmd = `cd ${ pkg.Fullpath } && npm i --save-dev ${ args.name }@latest`;
 
       exec(cmd, (error, stdout, stderr) => {
         if (error == null) {
@@ -386,7 +427,7 @@ export class FileChice {
   deleteDependencies() {
     ipcMain.on("dDependencies", async (event, args) => {
       let cmd, pkg = JsonDB.findName(args.project);
-      args.type.class == 0 ? cmd = `cd ${pkg.Fullpath} && npm uninstall --save ${args.type.name}` : cmd = `cd ${pkg.Fullpath} && npm uninstall --save-dev ${args.type.name}`;
+      args.type.class == 0 ? cmd = `cd ${ pkg.Fullpath } && npm uninstall --save ${ args.type.name }` : cmd = `cd ${ pkg.Fullpath } && npm uninstall --save-dev ${ args.type.name }`;
       exec(cmd, (error, stdout, stderr) => {
         if (error == null) {
           event.returnValue = "success"
@@ -406,8 +447,8 @@ export class FileChice {
       let pkg = JsonDB.findName(args.name)
       console.log("pkg: ", pkg)
       let cmd = Config.isMac
-        ? `cd ${pkg.Fullpath} && rm -rf node_modules && npm i`
-        : `cd ${pkg.Fullpath} && rd/s/q node_modules && npm i`;
+        ? `cd ${ pkg.Fullpath } && rm -rf node_modules && npm i`
+        : `cd ${ pkg.Fullpath } && rd/s/q node_modules && npm i`;
       console.log("RemoveModules: ", cmd)
       exec(cmd, (error, stdout, stderr) => {
         if (error == null) {

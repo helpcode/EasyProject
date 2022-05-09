@@ -13,7 +13,7 @@ block content
               .mask(v-bind:style="{ background : $store.getters.get_list[$store.getters.get_theme].BgColor, filter: `blur(${$store.state.mask.blur}px)`}")
               .back(v-if="$store.getters.get_list[$store.getters.get_theme].type == 'img' && $store.state.mask.open " v-bind:style="{ background: `rgba(0,0,0,${$store.state.mask.opacity})` }")
               ul.list_item.nodrag
-                  li(:title="v.FolderName" v-bind:style="{ color : $store.getters.get_list[$store.getters.get_theme].textColor, background: i == clickProjectIndex ? $store.getters.get_list[$store.getters.get_theme].activeBgColor : '' }"
+                  li(:title="v.name" v-bind:style="{ color : $store.getters.get_list[$store.getters.get_theme].textColor, background: i == clickProjectIndex ? $store.getters.get_list[$store.getters.get_theme].activeBgColor : '' }"
                       @click="openInfo(v,i)"
                       v-for="(v,i) in $store.getters.GET_PROJECT")
                     .left
@@ -22,7 +22,7 @@ block content
 
                         svg.icon(v-else="" aria-hidden='true' @click.stop="OpenPropject('cmd', v)" title="在终端打开")
                             use(v-bind:xlink:href='v.FolderIcon')
-                        | {{ v.FolderName }}
+                        | {{ v.name }}
 
                     .right(v-if="i == clickProjectIndex" @click.stop="")
                         svg.icon(aria-hidden='true' @click.stop="OpenPropject('file', v)" title="在文件管理打开")
@@ -36,7 +36,7 @@ block content
 
                             el-dropdown-menu(slot='dropdown')
                                 el-dropdown-item(v-for="(item,index) in MoreList" v-bind:icon="item.icon" v-bind:key="index"
-                                    v-bind:command="[ v.FolderName, item.id ]") {{ item.title }}
+                                    v-bind:command="[ v.name, item.id ]") {{ item.title }}
 
               .addfile(v-bind:style="{ color : $store.getters.get_list[$store.getters.get_theme].textColor}")
                 .left(@click="ChoiceFile")
@@ -74,6 +74,18 @@ block content
                     v-bind:title="item.title")
                     svg.icon(aria-hidden='true' @click="SelectIcon(item)")
                         use(v-bind:xlink:href="item.icon")
+
+        el-dialog(title='检查升级', v-bind:show-close="false", v-bind:close-on-click-modal="false" ,v-bind:visible.sync='$store.state.isUpdate', width='50%',)
+            .update_content
+                img(src="../../assets/img/logo.png")
+                .c_text
+                    .title {{ $store.state.updateInfo.title }}
+                    .version 版本：v{{ $store.state.updateInfo.version }}
+                    ul
+                      li(v-for="(item,index) in $store.state.updateInfo.detailed" v-bind:key="index") {{ item }}
+            span.dialog-footer(slot='footer')
+                el-button(@click='$store.state.isUpdate = false ') 下次一定
+                el-button(type='primary', @click='downNowDmg($store.state.updateInfo.down)') 立即更新
 
 
 block script

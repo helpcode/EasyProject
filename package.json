@@ -12,6 +12,7 @@
   "build": {
     "appId": "com.bmy.EasyProject",
     "productName": "EasyProject",
+    "asar": false,
     "copyright": "Copyright © 2022 bmy",
     "files": [
       "dist/**/*"
@@ -44,7 +45,8 @@
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "target": [
-        "dmg","7z"
+        "dmg",
+        "7z"
       ]
     },
     "win": {

@@ -21,6 +21,33 @@ export default class Utils {
     return Config.ApiUrl.BaseUrl
   }
 
+  /**
+   *
+   * @param curV 新版本号
+   * @param reqV 当前应用的版本号
+   */
+  public static compare(curV: string, reqV: string): boolean {
+    if (curV && reqV) {
+      //将两个版本号拆成数字
+      var arr1 = curV.split('.'),
+        arr2 = reqV.split('.');
+      var minLength = Math.min(arr1.length, arr2.length),
+        position = 0,
+        diff = 0;
+      //依次比较版本号每一位大小，当对比得出结果后跳出循环（后文有简单介绍）
+      while (position < minLength && ((diff = parseInt(arr1[position]) - parseInt(arr2[position])) == 0)) {
+        position++;
+      }
+      diff = (diff != 0) ? diff : (arr1.length - arr2.length);
+      //若curV大于reqV，则返回true
+      return diff > 0;
+    } else {
+      //输入为空
+      console.log("版本号不能为空");
+      return false;
+    }
+  }
+
   public static _TaskMap: Map<string, {[key:string]:any}[]> = new Map();
 
   /**
@@ -155,16 +182,16 @@ export default class Utils {
       // 读取用户选中项目中的 package.json
       let PackageObj: { [key: string]: any } = Utils.readPackage(PackageFile[0]);
       // 用项目名从数据库中条件查询这个项目
-      let IsSave: undefined | { [key: string]: any } = JsonDB.findName(PackageObj.name);
+      let IsSave: undefined | { [key: string]: any } = JsonDB.isHaveName(PackageObj.name);
 
+      console.log("IsSave ==== : ", IsSave)
       // 本地数据库没有存储过用户选中的项目配置
       if (IsSave == undefined) {
         let NewItem = {...PackageObj};
         delete NewItem.scripts;
         delete NewItem.devDependencies;
         delete NewItem.dependencies;
-        // 将package.json整个对象存入 json 数据库中，json数据库路径为：/Users/bmy/.project/db.json
-        JsonDB.saveProject({
+        let selectProject = {
           Fullpath: Path,
           FolderName: parse(Path).name,
           CurrentTabs: 'home',
@@ -172,9 +199,13 @@ export default class Utils {
           TaskRunList: [], // 前端的启动命令
           DependentList: [],// 前端的依赖
           ...NewItem
-        })
+        }
+        // 将package.json整个对象存入 json 数据库中，json数据库路径为：/Users/bmy/.project/db.json
+        JsonDB.saveProject(selectProject);
+        return selectProject;
+      } else {
+        return undefined
       }
-      return JsonDB.project()
       // 不是前端项目
     } else {
       console.log("不是前端项目")
@@ -285,23 +316,20 @@ export default class Utils {
       // @ts-ignore
       Windows.CurrentBrowserWindow = new BrowserWindow(Config.PageSize[name]);
       // @ts-ignore
-      Windows.CurrentBrowserWindow.loadFile(<string>Config.PagePath[name])
+      Windows.CurrentBrowserWindow.loadFile(<string>Config.PagePath[name]);
       if (name == "Home") {
         app.whenReady().then(() => {
-          // 创建 touchbar
-          new Touchbar()
           // 创建顶部托盘
           new TrayInteractive()
+
+          // 创建 touchbar
+          new Touchbar()
           // 设置关于的信息
-          app.setAboutPanelOptions({
-            applicationName: "EasyProject",
-            copyright: "copyright @bmy",
-            website: "https://github.com/helpcode",
-            credits: "统一管理组织凌乱无序的软件项目，带来一站式的快感。"
-          })
-        })
+          app.setAboutPanelOptions(Config.appAbout)
+        });
+        Utils.ShowWindows()
       }
-      Utils.ShowWindows()
+      Windows.CurrentBrowserWindow.show()
 
     } catch (e) {
       throw new Error("创建窗体失败，请检查配置文件，窗体的html路径是否正确！")

@@ -155,7 +155,43 @@
     width: 79%;
   }
 }
-
+.update_content {
+  flex: 1;
+  display: flex;
+  width: 100%;
+  img {
+    width: 100px;
+    height: 100px;
+  }
+  .c_text {
+    margin-left: 30px;
+    flex: 1;
+    height: 284px;
+    display: flex;
+    flex-direction: column;
+    .title {
+      font-size: 23px;
+      margin-bottom: 3px;
+      font-weight: 400;
+    }
+    .version {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #464646;
+    }
+    ul {
+      padding-left: 22px;
+      flex: 1;
+      height: 219px;
+      overflow-y: scroll;
+      li {
+        margin-bottom: 5px;
+        color: #464646;
+        list-style: auto;
+      }
+    }
+  }
+}
 .tabContent {
   padding-left: 18px;
 }
