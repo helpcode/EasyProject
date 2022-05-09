@@ -2,7 +2,7 @@ class Index {
   constructor() {
     // 下载地址
     this.newDownUrl = ""
-    this.getLatestReleases();
+    // this.getLatestReleases();
     this.initWow();
   }
 
