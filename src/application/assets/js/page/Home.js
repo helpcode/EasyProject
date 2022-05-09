@@ -53,11 +53,9 @@ let Home = new Vue({
   created() {
     // 调用升级检测
     this.onMainWebContents();
-    this.GetProjectList()
-  },
-  mounted() {
+    this.GetProjectList();
     setTimeout(() =>
-      this.$store.dispatch('checkUpdate','default'), 2000)
+      this.$store.dispatch('checkUpdate','default'), 1000)
   },
   methods: {
     downNowDmg(url) {
