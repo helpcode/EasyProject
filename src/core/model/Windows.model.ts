@@ -1,17 +1,25 @@
-import { WebContents, BrowserWindow } from "electron";
+import { WebContents, BrowserWindow, Tray } from "electron";
 
 class Windows {
-
     private _HomeBrowserWindow!: BrowserWindow;
     private _CurrentBrowserWindow!: BrowserWindow;
     private _SettingBrowserWindow!: BrowserWindow;
 
     private _CurrentWindowNew!: any;
 
+    private _tray!: Tray;
+
     // @ts-ignore
     private _HomeBrowserWindowWebContents!: typeof WebContents;
     // @ts-ignore
     private _SettingBrowserWindowWebContents!: typeof WebContents;
+
+    get tray(): Tray {
+        return this._tray;
+    }
+    set tray(value: Tray) {
+        this._tray = value;
+    }
 
     get CurrentWindowNew(): any {
         return this._CurrentWindowNew;

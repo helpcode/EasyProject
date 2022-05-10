@@ -1,15 +1,27 @@
 import { PagePath, PageSize } from "@type/PageConfig.types";
 import { TrayConfig } from "@type/Tray.types";
 import { ApiUrlConfig } from "@type/ApiConfig";
-import { app, Menu, shell, MenuItemConstructorOptions,
-  MenuItem, TouchBarConstructorOptions, TouchBar,
-  dialog, ipcRenderer, AboutPanelOptionsOptions
+import {
+  AboutPanelOptionsOptions,
+  app,
+  remote,
+  dialog,
+  MenuItem,
+  MenuItemConstructorOptions,
+  nativeImage,
+  shell,
+  TouchBar,
+  TouchBarConstructorOptions
 } from "electron";
 
 import Windows from "@/core/model/Windows.model";
-const {TouchBarLabel, TouchBarButton, TouchBarSpacer, TouchBarPopover} = TouchBar;
 import { join } from "path";
 import { JadeOptions } from "jade";
+import Utils from "@utils/Index.utils";
+import JsonDB from "@utils/db.utils";
+import { spawn } from "child_process";
+
+const { TouchBarLabel, TouchBarButton, TouchBarSpacer, TouchBarPopover } = TouchBar;
 
 export default class Config {
   /**
@@ -22,7 +34,6 @@ export default class Config {
   public static isMac: Boolean = process.platform === 'darwin';
   public static isWindows: Boolean = process.platform === 'win32';
   public static isLinux: Boolean = process.platform === 'linux';
-
   public static LogsPath: string = "../../../logs/";
 
   // 升级地址
@@ -81,7 +92,6 @@ export default class Config {
       titleBarStyle: 'hidden',
       transparent: true,
       simpleFullscreen: true,
-      // titlebar 不是那么透明的毛玻璃
       vibrancy: 'menu',
       hasShadow: false,
       show: false,
@@ -95,12 +105,14 @@ export default class Config {
     Home: {
       width: 1060,
       height: 710,
+      minHeight: 630,
+      minWidth: 954,
       frame: false,
       backgroundColor: '#00000000',
       titleBarStyle: 'hidden',
       transparent: true,
       simpleFullscreen: true,
-      hasShadow: false,
+      hasShadow: true,
       show: false,
       webPreferences: {
         webSecurity: false,
@@ -129,38 +141,87 @@ export default class Config {
 
   // Mac系统顶部全局菜单 右边图标
   public static TrayConfig: TrayConfig = {
-    TopMenuRightImage: join(__dirname, '/application/assets/img/pug.png'),
+    TopMenuRightImage: join(__dirname, '../../application/assets/img/logo.png'),
     TopMenuRightDropdown: [
       {
         label: '显示主窗口',
-        click: () => {
-          Windows.CurrentBrowserWindow.show();
+        click: (menuItem: any, browserWindow: any, event: any) => {
+          Windows?.CurrentBrowserWindow?.show();
         }
       },
+      { type: 'separator' },
       {
-        icon: join(__dirname, '../../application/assets/img/pug.png'),
-        label: '下拉菜单测试',
-        type: 'checkbox',
-        checked: true,
-        click: (menuItem: any, browserWindow: any) => {
-          console.log("menuItem: ", menuItem);
-        }
-      },
-      {
-        label: '菜单',
-        submenu: [
-          {
-            label: '子菜单1'
-          },
-          {
-            label: '子菜单2'
+        label: '导入项目',
+        accelerator: "Cmd+i",
+        click: async (menuItem: any, browserWindow: any, event: any) => {
+          let res = await Utils.ImportProject();
+          if (!browserWindow.webContents.getURL().includes("Welcome.html")) {
+            browserWindow.webContents.send('TouchBarImportProject', res)
           }
-        ],
+        }
       },
       {
-        role: 'quit',
-        label: '退出'
+        // TODO 导入 项目 的时候，这边项目列表不更新
+        label: '项目列表(功能暂未全实现)',
+        submenu: (JsonDB.project() as Array<any>).map((v:any,index) => {
+          return {
+            label: `${v.name}`,
+            submenu: [
+              {
+                label: '在访达打开',
+                click: async (menuItem: any, browserWindow: any, event: any) => {
+                  await shell.openPath(v.Fullpath);
+                }
+              },
+              {
+                label: '在终端打开',
+                click: async (menuItem: any, browserWindow: any, event: any) => {
+                  spawn ('open', [ '-a', 'Terminal', v.Fullpath ])
+                }
+              },
+              {
+                label: '在应用打开',
+                click: async (menuItem: any, browserWindow: any, event: any) => {
+                  Windows.CurrentBrowserWindow.show();
+                }
+              },
+            ]
+          }
+        }),
       },
+      { type: 'separator' },
+      {
+        label: "设置...",
+        accelerator: "Cmd+,",
+        click: async (menuItem: any, browserWindow: any, event: any) => {
+          if (!browserWindow.webContents.getURL().includes("Welcome.html")) {
+            browserWindow.webContents.send('openSetting')
+          } else {
+          }
+        }
+      },
+      {
+        label: '隐藏Dock图标',
+        type: 'checkbox',
+        checked: false,
+        click: async (menuItem: any, browserWindow: any, event: any) => {
+          menuItem.checked ? app.dock.hide() : app.dock.show()
+        }
+      },
+      { type: 'separator' },
+      {
+        label: `重启应用`,
+        click: () => {
+          app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) })
+          app.exit(0)
+        }
+      },
+      {
+        label: `杀死 ${ app.name }`,
+        click: () => {
+          app.exit(0)
+        }
+      }
     ],
     TopMenuRightTips: '测试提醒'
   };
@@ -170,8 +231,8 @@ export default class Config {
     {
       label: app.name,
       submenu: [
-        {label: `关于 ${ app.name }`, role: 'about'},
-        {type: 'separator'},
+        { label: `关于 ${ app.name }`, role: 'about' },
+        { type: 'separator' },
         {
           label: "偏好设置",
           accelerator: "Cmd+,",
@@ -182,58 +243,55 @@ export default class Config {
             }
           }
         },
-        {type: 'separator'},
-        {label: '服务', role: 'services'},
-        {type: 'separator'},
-        {label: `隐藏 ${ app.name }`, role: 'hide'},
-        {label: '隐藏其他', role: 'hideOthers'},
-        {label: '隐藏其他2', role: 'unhide'},
-        {type: 'separator'},
-        {label: `退出${ app.name }`, role: 'quit'}
+        { type: 'separator' },
+        { label: '服务', role: 'services' },
+        { type: 'separator' },
+        { label: `隐藏 ${ app.name }`, role: 'hide' },
+        { label: '隐藏其他', role: 'hideOthers' },
+        { label: '隐藏其他2', role: 'unhide' },
+        { type: 'separator' },
+        { label: `退出${ app.name }`, role: 'quit' }
       ]
     },
     {
-      label: '文件',
+      label: "文件",
+      submenu: [
+        {
+          label: '导入项目',
+          accelerator: "Cmd+i",
+          click: async (menuItem: any, browserWindow: any, event: any) => {
+            let res = await Utils.ImportProject();
+            console.log("导入项目 res: ", res)
+            if (!browserWindow.webContents.getURL().includes("Welcome.html")) {
+              browserWindow.webContents.send('TouchBarImportProject', res)
+            }
+          }
+        },
+      ]
     },
     {
       label: '编辑',
       submenu: [
-        {label: '撤销', role: 'undo'},
-        {label: '恢复', role: 'redo'},
-        {type: 'separator'},
-        {label: '剪切', role: 'cut'},
-        {label: '复制', role: 'copy'},
-        {label: '粘贴', role: 'paste'},
-        {type: 'separator'},
-        {label: '粘贴保留样式', role: 'pasteAndMatchStyle'},
-        {label: '删除', role: 'delete'},
-        {label: '全选', role: 'selectAll'},
-        {type: 'separator'},
-        {
-          label: '听写',
-          submenu: [
-            {label: '开始听写', role: 'startSpeaking'},
-            {label: '停止听写', role: 'stopSpeaking'}
-          ]
-        }
-      ]
-    },
-    {
-      label: '视图',
-      submenu: [
-        {label: '刷新', role: 'reload'},
-        {label: '重置', role: 'resetZoom'},
-        {type: 'separator'},
-        {label: '全屏', role: 'togglefullscreen'},
-        {label: '切换开发人员工具', role: 'toggleDevTools'},
+        { label: '撤销', role: 'undo' },
+        { label: '恢复', role: 'redo' },
+        { type: 'separator' },
+        { label: '剪切', role: 'cut' },
+        { label: '复制', role: 'copy' },
+        { label: '粘贴', role: 'paste' },
+        { type: 'separator' },
+        { label: '粘贴保留样式', role: 'pasteAndMatchStyle' },
+        { label: '删除', role: 'delete' },
+        { label: '全选', role: 'selectAll' },
+        { type: 'separator' },
+        { label: '听写', submenu: [ { label: '开始听写', role: 'startSpeaking' }, { label: '停止听写', role: 'stopSpeaking' } ] }
       ]
     },
     {
       label: '窗口',
       submenu: [
-        {label: '最小化', role: 'minimize'},
-        {label: '最大化', role: 'zoom'},
-        {label: '关闭', role: 'close'}
+        { label: '最小化', role: 'minimize' },
+        { label: '最大化', role: 'zoom' },
+        { label: '关闭', role: 'close' }
       ]
     },
     {
@@ -250,22 +308,14 @@ export default class Config {
             })
           }
         },
-        {
-          label: 'GitHub 主页',
-          click: async () => {
-            await shell.openExternal("https://github.com/helpcode")
-          }
-        },
-        {
-          label: '赞助我',
-          click: async () => {
-            await dialog.showMessageBox({
-              type: "info",
-              title: '联系作者',
-              message: "如果你有任何使用建议或者反馈Bug\n请添加QQ：2271608011"
-            })
-          }
-        }
+        app.isPackaged
+          ? {
+              label: 'GitHub 主页',
+              click: async () => {
+                await shell.openExternal("https://github.com/helpcode")
+              }
+            }
+        :  { label: '切换开发人员工具', role: 'toggleDevTools' },
       ]
     }
   ];
@@ -277,35 +327,44 @@ export default class Config {
         label: '导入项目',
         iconPosition: "left",
         icon: join(__dirname, '../../application/assets/img/+normal@2x.png'),
-        click: () => {
+        click: async () => {
+          let res = await Utils.ImportProject();
+          console.log("导入项目 res: ", res)
+          if (!Windows.CurrentBrowserWindow.webContents.getURL().includes("Welcome.html")) {
+            Windows.CurrentBrowserWindow.webContents.send('TouchBarImportProject', res)
+          }
         }
       }),
       new TouchBarPopover({
         label: '帮助',
         showCloseButton: true,
+        icon: (nativeImage.createFromPath(join(__dirname, '../../application/assets/img/help.png'))).resize({
+          width: 16,
+          height: 16
+        }),
         items: new TouchBar({
-          items:  [
+          items: [
             new TouchBarButton({
               label: '联系作者',
               backgroundColor: '#3a3a3c',
-              click: () => {
+              click: async () => {
+                await dialog.showMessageBox({
+                  type: "info",
+                  title: '联系作者',
+                  message: "如果你有任何使用建议或者反馈Bug\n请添加 QQ：2271608011"
+                })
               }
             }),
             new TouchBarButton({
               label: 'Github主页',
               backgroundColor: '#3a3a3c',
-              click: () => {
+              click: async () => {
+                await shell.openExternal("https://github.com/helpcode")
               }
-            }),
-            new TouchBarButton({
-              label: '赞助我',
-              backgroundColor: '#3a3a3c',
-              click: () => {
-              }
-            }),
+            })
           ]
         })
-      })
+      }),
     ]
   };
 }

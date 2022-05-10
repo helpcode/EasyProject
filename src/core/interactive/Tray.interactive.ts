@@ -1,5 +1,8 @@
 import { nativeImage, NativeImage, Menu, Tray } from "electron";
 import Config from "@config/Index.config";
+import JsonDB from "@utils/db.utils";
+import Windows from "@/core/model/Windows.model";
+import Utils from "@utils/Index.utils";
 
 export class TrayInteractive {
 
@@ -7,23 +10,14 @@ export class TrayInteractive {
 
     constructor() {
         this.tray = new Tray(this.setTemplateImage());
+        Windows.tray = this.tray;
         this.buildTrayMenu()
-        this.TrayItemClick()
-    }
-
-    /**
-     * 全局菜单图标被点击时触发事件
-     * @constructor
-     */
-    private TrayItemClick() {
-        this.tray.on('click', () => {
-            console.log("按钮被点击");
-        })
     }
 
     private buildTrayMenu() {
         let contextMenu: Menu = Menu.buildFromTemplate(Config.TrayConfig.TopMenuRightDropdown);
         this.tray.setToolTip(Config.TrayConfig.TopMenuRightTips)
+        Utils.setTrayTitleNums();
         this.tray.setContextMenu(contextMenu)
     }
 
@@ -33,6 +27,6 @@ export class TrayInteractive {
     private setTemplateImage(): NativeImage {
         let image: NativeImage = nativeImage.createFromPath(Config.TrayConfig.TopMenuRightImage);
         image.setTemplateImage(true)
-        return image
+        return image.resize({ width: 20, height: 20 })
     }
 }

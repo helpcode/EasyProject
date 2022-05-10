@@ -1,6 +1,7 @@
 import {join, parse} from "path";
 import Config from "@config/Index.config";
-import {BrowserWindow, Notification, NotificationConstructorOptions, app} from "electron";
+import {BrowserWindow, Notification, NotificationConstructorOptions, app, TouchBar, TouchBarButton as TB} from "electron";
+const {TouchBarLabel, TouchBarSpacer, TouchBarPopover, TouchBarButton} = TouchBar;
 import {mkdirSync, writeFileSync, existsSync, PathLike} from "fs";
 import {renderFile} from "jade";
 import Windows from "@model/Windows.model";
@@ -10,6 +11,7 @@ import JsonDB from "@utils/db.utils";
 import {Touchbar} from "@interactive/Touchbar.interactive";
 import {TrayInteractive} from "@interactive/Tray.interactive";
 import {ApplicationMenu} from "@interactive/ApplicationMenu.interactive";
+import { Dialog } from "@interactive/Dialog.interactive";
 
 // require('electron-reload')(__dirname, {
 //   electron: "/Applications/Electron.app/Contents/MacOS/Electron"
@@ -114,6 +116,43 @@ export default class Utils {
   }
 
   /**
+   *  导入项目 被 前端 和 Touchbar 用到
+   */
+  public static async ImportProject(): Promise<any> {
+    let DirectoryPath = await Dialog.showDialog({
+      message: "选择您的项目",
+      buttonLabel: '导入项目',
+      properties: [ 'openDirectory', 'showHiddenFiles' ]
+    });
+    if (DirectoryPath) {
+      let res = await Utils.GetPathFileList(DirectoryPath[ 0 ]);
+      Utils.setTrayTitleNums();
+      Utils.updateTouchbarList();
+      return res;
+    } else {
+      return undefined;
+    }
+  }
+
+
+  /**
+   * 设置顶部托盘上 项目已导入的 数量
+   */
+  public static setTrayTitleNums() {
+    Windows.tray.setTitle((JsonDB.project() as Array<any>).length.toString())
+  }
+
+  /**
+   * 更新 touchbar 上的 项目列表
+   */
+  public static updateTouchbarList() {
+    let touch = new Touchbar();
+    // @ts-ignore
+    touch = null;
+  }
+
+
+  /**
    * 数组对象的深拷贝
    * @param arr
    * @constructor
@@ -183,8 +222,6 @@ export default class Utils {
       let PackageObj: { [key: string]: any } = Utils.readPackage(PackageFile[0]);
       // 用项目名从数据库中条件查询这个项目
       let IsSave: undefined | { [key: string]: any } = JsonDB.isHaveName(PackageObj.name);
-
-      console.log("IsSave ==== : ", IsSave)
       // 本地数据库没有存储过用户选中的项目配置
       if (IsSave == undefined) {
         let NewItem = {...PackageObj};
@@ -317,20 +354,26 @@ export default class Utils {
       Windows.CurrentBrowserWindow = new BrowserWindow(Config.PageSize[name]);
       // @ts-ignore
       Windows.CurrentBrowserWindow.loadFile(<string>Config.PagePath[name]);
-      if (name == "Home") {
-        app.whenReady().then(() => {
-          // 创建顶部托盘
-          new TrayInteractive()
 
-          // 创建 touchbar
-          new Touchbar()
-          // 设置关于的信息
-          app.setAboutPanelOptions(Config.appAbout)
-        });
+      // 当点击关闭按钮
+      Windows.CurrentBrowserWindow.on('close', (e: any) => {
+        console.log(" 阻止退出程序，重点")
+        // 阻止退出程序，重点
+        e.preventDefault();
+        // 隐藏主程序窗口
+        Windows.CurrentBrowserWindow.hide()
+      })
+
+      if (name == "Home") {
+        // 创建顶部托盘
+        new TrayInteractive()
+        // 创建 touchbar
+        new Touchbar()
+        // 设置关于的信息
+        app.setAboutPanelOptions(Config.appAbout)
         Utils.ShowWindows()
       }
       Windows.CurrentBrowserWindow.show()
-
     } catch (e) {
       throw new Error("创建窗体失败，请检查配置文件，窗体的html路径是否正确！")
     }
@@ -349,7 +392,7 @@ export default class Utils {
           Windows.CurrentBrowserWindow.show()
         }
       }
-    }, 70)
+    }, 30)
 
   }
 }

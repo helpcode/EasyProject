@@ -63,7 +63,6 @@ export class Application {
      */
     shellOpen() {
         ipcMain.on("OpenProject", async (event, arg:any) => {
-            console.log(arg.path)
             arg.type == 'file'
             ? await shell.openPath(arg.path)
             : Config.isMac

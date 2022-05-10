@@ -23,7 +23,9 @@ class Index {
   }
 
   async getLatestReleases() {
-    let data = await fetch("https://api.github.com/repos/helpcode/EasyProject/releases/latest");
+    let data = await fetch("https://api.github.com/repos/helpcode/EasyProject/releases/latest", {
+      headers: { 'Authorization': 'Basic aGVscGNvZGU6Z2hwXzBEZmx3cDFQY2l6VVRNOFkxTTNBMDZxQlhTZGpvSjRHak4xMw==' }
+    });
     let res = await data.json();
     this.newDownUrl = res.assets[0].browser_download_url;
     this.downApp();

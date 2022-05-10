@@ -39,7 +39,8 @@ export class Http {
             });
             return this.ResponseData.data;
         } catch (e) {
-            throw new Error(`GET 请求出错：${e.message}`)
+            console.log(`GET 请求出错：${e.message}`)
+            // throw new Error(`GET 请求出错：${e.message}`)
         }
     }
 

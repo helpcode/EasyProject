@@ -84,9 +84,19 @@ let Home = new Vue({
      * 监听主进程发过来的消息
      */
     onMainWebContents() {
-      // 打开设置页面
+      // 主进程发送过来的消息，打开设置页面
       ipcRenderer.on('openSetting', (event, message) => {
         this.$router.push("/setting")
+      })
+
+      // 使用 touchbar导入项目
+      ipcRenderer.on('TouchBarImportProject', (event, message) => {
+        if (message != undefined) {
+          this.$store.commit('SET_LIST', {
+            res: message,
+            type: 'ChoiceFile'
+          });
+        }
       })
 
       let result = ipcRenderer.sendSync('getVersion', {

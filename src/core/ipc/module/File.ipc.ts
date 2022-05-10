@@ -11,6 +11,9 @@ import Config from "@config/Index.config";
 import kill from "tree-kill";
 import { basename, dirname, resolve } from "path";
 import { ProcessUtils } from "@utils/process.utils";
+import { Touchbar } from "@interactive/Touchbar.interactive";
+import { TrayInteractive } from "@interactive/Tray.interactive";
+import Windows from "@model/Windows.model";
 
 export class FileChice {
 
@@ -22,20 +25,30 @@ export class FileChice {
 
   sendSettingConfig() {
     ipcMain.on("checkUpdate", async (event, args) => {
-      let res = await this._Net.GET({ url: Config.UpdateUrl, custom: undefined });
-      let returnVal: any = {}
-      // 如果需要更新
-      if (Utils.compare(res.tag_name, app.getVersion())) {
-        returnVal.isUpdate = true;
-        returnVal.detailed = res.body.split("\r\n");
-        returnVal.version = res.tag_name;
-        returnVal.title = res.name;
-        returnVal.down = res.assets[ 0 ].browser_download_url;
-        returnVal.updatedTime = res.assets[ 0 ].updated_at;
+      let returnVal: any = {};
+      let res = await this._Net.GET({
+        url: Config.UpdateUrl,
+        custom: undefined,
+        header: {
+          'Authorization': 'Basic aGVscGNvZGU6Z2hwXzBEZmx3cDFQY2l6VVRNOFkxTTNBMDZxQlhTZGpvSjRHak4xMw=='
+        }
+      });
+      if (res != undefined) {
+        // 如果需要更新
+        if (Utils.compare(res.tag_name, app.getVersion())) {
+          returnVal.isUpdate = true;
+          returnVal.detailed = res.body.split("\r\n");
+          returnVal.version = res.tag_name;
+          returnVal.title = res.name;
+          returnVal.down = res.assets[ 0 ].browser_download_url;
+          returnVal.updatedTime = res.assets[ 0 ].updated_at;
+        } else {
+          returnVal.isUpdate = false;
+        }
+        event.returnValue = returnVal
       } else {
         returnVal.isUpdate = false;
       }
-      event.returnValue = returnVal
     })
 
     ipcMain.on("getVersion", async (event, args) => {
@@ -75,7 +88,6 @@ export class FileChice {
 
   getProcess() {
     ipcMain.on("getProcess", async (event, args) => {
-      console.log("args.pid: ", args.pid)
       let res = await this._process.GetAllProcess(args.pid);
       event.returnValue = res
     })
@@ -141,8 +153,10 @@ export class FileChice {
   removeListProject() {
     // 从项目列表删除项目
     ipcMain.on("removeListProject", async (event, args) => {
-      let a = JsonDB.remove({ FolderName: args.name });
+      let a = JsonDB.remove({ name: args.name });
       if (a != undefined) {
+        Utils.updateTouchbarList();
+        Utils.setTrayTitleNums();
         event.returnValue = "success"
       } else {
         event.returnValue = undefined
@@ -158,7 +172,7 @@ export class FileChice {
         // 从磁盘删除
         await remove(resolve(project.Fullpath));
         // 从本地数据库删除
-        JsonDB.remove({ FolderName: args.name });
+        JsonDB.remove({ name: args.name });
         event.returnValue = "success"
       } catch (err) {
         event.returnValue = err.message
@@ -176,6 +190,7 @@ export class FileChice {
         .find({ name: args.oldName })
         .assign({ name: args.newName })
         .write()
+      Utils.updateTouchbarList();
       event.returnValue = "success"
     });
   }
@@ -183,7 +198,7 @@ export class FileChice {
   changeIcon() {
     ipcMain.on("ChangeIcon", async (event, args) => {
       JsonDB.db.get('projects')
-        .find({ FolderName: args.name })
+        .find({ name: args.name })
         .assign({ FolderIcon: args.newIcon })
         .write()
       event.returnValue = "success"
@@ -195,17 +210,7 @@ export class FileChice {
    */
   openDirectory() {
     ipcMain.on("openDirectory", async (event, args) => {
-      let DirectoryPath = await Dialog.showDialog({
-        message: "选择您的项目",
-        buttonLabel: '导入项目',
-        properties: [ 'openDirectory', 'showHiddenFiles' ]
-      });
-      if (DirectoryPath) {
-        let res = await Utils.GetPathFileList(DirectoryPath[ 0 ]);
-        event.returnValue = res
-      } else {
-        event.returnValue = undefined
-      }
+      event.returnValue = await Utils.ImportProject();
     })
   }
 

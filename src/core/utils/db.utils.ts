@@ -70,7 +70,7 @@ class Db {
     /**
      * 获取所有项目
      */
-    public project(table: string = "projects"): undefined | { [key: string]: any} {
+    public project(table: string = "projects"): undefined | { [key: string]: any} | Array<Object> {
         return this.db.get(table).value();
     }
 

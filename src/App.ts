@@ -2,6 +2,7 @@ require('./moduleAlias');
 
 import { app } from "electron";
 import { Run } from "@run/Init.run";
+import Windows from "@/core/model/Windows.model";
 
 /**
  * 解决 Electron 打包发布后，通过GUI点击 xx.app 启动成程序
@@ -26,4 +27,8 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit()
     }
+});
+
+app.on('activate', () => {
+    Windows.CurrentBrowserWindow.show()
 });
