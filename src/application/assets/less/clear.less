@@ -45,6 +45,7 @@ input {
   user-select: none !important;
   box-shadow: 0.5px 1px 1px #e4e4e4 !important;
 }
+
 .el-tabs {
   display: flex;
   height: 100%;
@@ -71,10 +72,8 @@ input {
   border-radius: 10px !important;
   background: #ededed;
 }
-.v-modal {
-  width: 100% !important;
-  height: 100% !important;
-  border-radius: 10px !important;
+/deep/ .v-modal {
+  opacity: 0.5 !important;
 }
 
 .el-tabs__item:focus.is-active.is-focus:not(:active) {

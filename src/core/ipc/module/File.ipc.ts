@@ -5,20 +5,20 @@ import { Http } from "@net/Http.net";
 import Utils from "@utils/Index.utils";
 import JsonDB from "@utils/db.utils";
 import { existsSync, readJsonSync, remove } from "fs-extra";
-import { createRequire } from "module"
 import { exec, spawn } from "child_process";
 import Config from "@config/Index.config";
 import kill from "tree-kill";
 import { basename, dirname, resolve } from "path";
 import { ProcessUtils } from "@utils/process.utils";
-import { Touchbar } from "@interactive/Touchbar.interactive";
-import { TrayInteractive } from "@interactive/Tray.interactive";
-import Windows from "@model/Windows.model";
+import { Package } from "@utils/package.utils";
 
 export class FileChice {
 
   @Inject()
   private readonly _Net!: Http;
+
+  @Inject()
+  private readonly _Package!: Package;
 
   // @Inject()
   private readonly _process: ProcessUtils = new ProcessUtils();
@@ -61,6 +61,10 @@ export class FileChice {
 
     ipcMain.on("push_themeList", async (event, args) => {
       event.returnValue = JsonDB.saveProject(args.value, `setting.${ args.keyName }`)
+    })
+
+    ipcMain.on("setPackageTypeindex", async (event, args) => {
+      JsonDB.update(args.keyName, args.value)
     })
 
     ipcMain.on("getSettingConfig", async (event, args) => {
@@ -136,10 +140,7 @@ export class FileChice {
   InstallPlug() {
     ipcMain.on("installPlug", async (event, args) => {
       let pkg = JsonDB.findName(args.project);
-      let cmd = args.status == 0
-        ? `cd ${ pkg.Fullpath } && npm i --save ${ args.name }`
-        : `cd ${ pkg.Fullpath } && npm i --save-dev ${ args.name }`;
-
+      let cmd = `cd ${ pkg.Fullpath } && ${this._Package.install("other", args)}`
       exec(cmd, (error, stdout, stderr) => {
         if (error == null) {
           event.returnValue = "success"
@@ -248,8 +249,8 @@ export class FileChice {
       let currentTask: any = Utils.findOneTask(args);
 
       let cmd = args.ScriptName == 'install'
-        ? `cd ${ currentTask.path } && npm install`
-        : `cd ${ currentTask.path } && npm run ${ currentTask.ScriptName }`;
+        ? `cd ${ currentTask.path } && ${this._Package.install("i")}`
+        : `cd ${ currentTask.path } && ${this._Package.run(currentTask.ScriptName)}`;
 
       try {
         currentTask.Child = spawn(cmd, {
@@ -335,7 +336,7 @@ export class FileChice {
         ScriptName: 'install',
         IsRuning: "idle",
         RunLogs: '',
-        ScriptShell: 'npm install',
+        ScriptShell: this._Package.install("i"),
         Terminal: null,
         Child: null,
         pid: 0
@@ -364,35 +365,37 @@ export class FileChice {
    */
   GetDependentList() {
     ipcMain.on("GetDependentList", async (event, args) => {
+      console.log("获取依赖 ==== args: ", args)
       let project = JsonDB.findName(args.name);
       let pkg = Utils.readPackage(`${ project.Fullpath }/package.json`);
       let ListArr: { title: string, list: { [ key: string ]: any }[] }[] = [];
-      // 头像地址：https://avatars.dicebear.com/v2/identicon/插件名.svg
-      // 请求地址：https://registry.npmjs.org/插件名
-      [ pkg.dependencies, pkg.devDependencies ].forEach((v, i) => {
-        ListArr.push({ title: i == 0 ? '生产环境依赖' : '开发环境依赖', list: [] })
-        for (const key in v) {
-          try {
-            let ProjectPackage = `${ project.Fullpath }/package.json`,
-              resolvedPath = createRequire(ProjectPackage).resolve(`${ key }/package.json`);
-            if (existsSync(resolvedPath)) {
-              const modeulePackage = readJsonSync(resolvedPath);
 
-              ListArr[ i ].list.push({
-                name: key,
-                logoImg: `https://avatars.dicebear.com/v2/identicon/${ key.replace("/", "-") }.svg`,
-                currentVersion: v[ key ],
-                description: modeulePackage.description,
-                website: modeulePackage.homepage || (modeulePackage.repository && modeulePackage.repository.url) || `https://www.npmjs.com/package/${ key.replace('/', '%2F') }`
-              })
-            }
-
-          } catch (e) {
-            event.returnValue = undefined
-            // throw new Error(e.message)
+      // 检查项目中是否有 node_modules
+      if (existsSync(`${project.Fullpath}/node_modules`)) {
+        // 头像地址：https://avatars.dicebear.com/v2/identicon/插件名.svg
+        // 请求地址：https://registry.npmjs.org/插件名
+        [ pkg.dependencies, pkg.devDependencies ].forEach((v, i) => {
+          ListArr.push({
+            title: i == 0 ? '生产环境依赖' : '开发环境依赖',
+            list: []
+          })
+          for (const key in v) {
+              let otherPath = `${project.Fullpath}/node_modules/${key}/package.json`
+              if (existsSync(otherPath)) {
+                const modeulePackage = Utils.readPackage(otherPath);
+                ListArr[ i ].list.push({
+                  name: key,
+                  logoImg: `https://avatars.dicebear.com/v2/identicon/${ key.replace("/", "-") }.svg`,
+                  currentVersion: v[ key ],
+                  description: modeulePackage.description,
+                  website: modeulePackage.homepage || (modeulePackage.repository && modeulePackage.repository.url) || `https://www.npmjs.com/package/${ key.replace('/', '%2F') }`
+                })
+              }
           }
-        }
-      });
+        });
+      } else {
+        event.returnValue = undefined
+      }
       event.returnValue = ListArr
     })
   }
@@ -403,21 +406,9 @@ export class FileChice {
   updateDependencies() {
     ipcMain.on("uDependencies", async (event, args) => {
       let cmd, pkg = JsonDB.findName(args.project);
-      args.type == 0 ? cmd = `cd ${ pkg.Fullpath } && npm i --save ${ args.name }@latest` : cmd = `cd ${ pkg.Fullpath } && npm i --save-dev ${ args.name }@latest`;
-
+      cmd = `cd ${ pkg.Fullpath } && ${this._Package.up(args)}`
       exec(cmd, (error, stdout, stderr) => {
         if (error == null) {
-          // JsonDB.db._.mixin({
-          //   second: (array: any) =>
-          //     args.type == 0
-          //       ? array.dependencies
-          //       : array.devDependencies
-          // });
-          // JsonDB.db.get('projects')
-          //   .find({name: args.project})
-          //   .second()
-          //   .assign({[args.name]: `~${Utils.NewVersion(stdout)}`})
-          //   .write()
           event.returnValue = "success"
         } else {
           event.returnValue = stderr
@@ -432,7 +423,7 @@ export class FileChice {
   deleteDependencies() {
     ipcMain.on("dDependencies", async (event, args) => {
       let cmd, pkg = JsonDB.findName(args.project);
-      args.type.class == 0 ? cmd = `cd ${ pkg.Fullpath } && npm uninstall --save ${ args.type.name }` : cmd = `cd ${ pkg.Fullpath } && npm uninstall --save-dev ${ args.type.name }`;
+      cmd = `cd ${ pkg.Fullpath } && ${this._Package.uninstall(args.type)}`;
       exec(cmd, (error, stdout, stderr) => {
         if (error == null) {
           event.returnValue = "success"
@@ -450,16 +441,14 @@ export class FileChice {
     ipcMain.on("reDependent", async (event, args) => {
       console.log("args.name: ", args.name)
       let pkg = JsonDB.findName(args.name)
-      console.log("pkg: ", pkg)
-      let cmd = Config.isMac
-        ? `cd ${ pkg.Fullpath } && rm -rf node_modules && npm i`
-        : `cd ${ pkg.Fullpath } && rd/s/q node_modules && npm i`;
-      console.log("RemoveModules: ", cmd)
+      let cmd = `cd ${ pkg.Fullpath } && rm -rf node_modules && ${this._Package.install("i")}`
+      console.log("初始化依赖: ",cmd)
       exec(cmd, (error, stdout, stderr) => {
+        console.log(stdout)
         if (error == null) {
           event.returnValue = "success"
         } else {
-          event.returnValue = stderr
+          // event.returnValue = stderr
         }
       })
     })

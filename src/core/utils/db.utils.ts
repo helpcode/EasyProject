@@ -33,6 +33,10 @@ class Db {
                     opacity: 0.4,
                     blur: 0
                 },
+                packageTypeSelect: 0,
+                packageType: [
+                    "npm", "cnpm", "yarn", "pnpm"
+                ],
                 list: [
                     { system: false, type: 'color', text: '亮色', BgColor: 'rgb(227 224 224 / 80%)', textColor: '#222', activeBgColor: '#c5c2c2' },
                     { system: false, type: 'color', text: '暗色', BgColor: 'rgb(35 37 47 / 80%)', textColor: '#c3d1e9', activeBgColor: '#434b5c' },
@@ -61,6 +65,10 @@ class Db {
      */
     public findName(name: string, table: string = "projects", key: string = "FolderName"): { [key: string]: any} {
         return this.db.get(table).find({ [ key ]: name }).value()
+    }
+
+    public findOne(key: string = "", table: string = "projects"): any {
+        return this.db.get(`${table}.${key}`).value()
     }
 
     public isHaveName(name: string, table: string = "projects"): { [key: string]: any} {

@@ -54,8 +54,8 @@ let Home = new Vue({
     // 调用升级检测
     this.onMainWebContents();
     this.GetProjectList();
-    setTimeout(() =>
-      this.$store.dispatch('checkUpdate','default'), 1000)
+    // setTimeout(() =>
+    //   this.$store.dispatch('checkUpdate','default'), 1000)
   },
   methods: {
     downNowDmg(url) {
@@ -110,6 +110,8 @@ let Home = new Vue({
 
       // 把从json数据库中获取到的配置向 vuex 中合并
       this.$store.replaceState(Object.assign({},this.$store.state,res))
+      console.log("设置的参数：", this.$store.state)
+
     },
     openInfo(v,i) {
       this.clickProjectIndex = i;
@@ -206,7 +208,6 @@ let Home = new Vue({
 
       if (status == "success") {
         this.isIconDialog = false;
-        // TODO 问题2 this.GetProjectList()
       }
     },
 

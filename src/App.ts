@@ -1,6 +1,6 @@
 require('./moduleAlias');
 
-import { app } from "electron";
+import { app, dialog } from "electron";
 import { Run } from "@run/Init.run";
 import Windows from "@/core/model/Windows.model";
 
@@ -13,11 +13,18 @@ import Windows from "@/core/model/Windows.model";
 if (process.platform != 'win32') {
     process.env.PATH = [
         './node_modules/.bin',
-        '/.nodebrew/current/bin',
         '/usr/local/bin',
+        '/usr/local/bin/node',
+        '/usr/local/bin/npm',
+        '/usr/local/lib/node_modules',
         process.env.PATH,
     ].join(':');
 }
+
+// console.log(" process.env.PATH: ",  process.env.PATH)
+// console.log()
+// @ts-ignore
+// dialog.showErrorBox("测试1", process.env.PATH.toString())
 
 app.on('ready', () => {
     new Run()

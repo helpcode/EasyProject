@@ -51,7 +51,7 @@ module.exports = {
     }
   },
   created() {
-    console.log("======= created =======")
+
     this.GetShellMessage();
     this.onClose();
     this.projectName = this.$route.query.name;
@@ -417,6 +417,7 @@ module.exports = {
      */
     deletePack(va, type, PackName) {
       this.$confirm(`确定删除依赖：${PackName}吗？删除后，请修改项目代码！`, '删除提示', {
+        distinguishCancelAndClose: true,
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
@@ -443,9 +444,7 @@ module.exports = {
               title: '错误', message: `依赖：${PackName} 删除失败，原因：${status}`
             })
           }
-
           loading.close();
-
         }, 300)
 
       })
@@ -529,7 +528,8 @@ module.exports = {
       });
 
       if (status == undefined) {
-        this.$confirm(`项目：${this.projectName} 的 node_modules 缺失部分依赖，点击确定重新安装依赖！`, '依赖缺失', {
+        this.$confirm(`项目的 node_modules 缺失部分依赖，点击确定重新安装依赖！`, '依赖缺失', {
+          distinguishCancelAndClose: true,
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'error'

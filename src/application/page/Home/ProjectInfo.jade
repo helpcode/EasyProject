@@ -107,17 +107,16 @@
                 //        .title_tips 暂未启动过任何命令
                 //        .tips {{ titleTips }}
 
-    el-dialog.nodrag(title="安装依赖" v-bind:visible.sync="isShowInstallDev"
+    el-dialog.Dependencies.nodrag(title="安装依赖" v-bind:visible.sync="isShowInstallDev"
               @close="isShowInstallDev = false"
               width="60%" v-bind:close-on-click-modal="false" v-bind:destroy-on-close="true")
-        el-row(v-bind:gutter="18")
-            el-col(v-bind:span='12')
-                el-input.input-with-select(v-model="PlugInput" placeholder='请输入需要安装的插件名' clearable)
-            el-col(v-bind:span='8')
-                el-select(placeholder='选择安装环境' v-model="Environment" clearable)
-                    el-option(label='生产环境', v-bind:value='0')
-                    el-option(label='开发环境', v-bind:value='1')
-            el-col(v-bind:span='3')
-                el-button(plain @click="SearchList" v-bind:loading="isInstalling") 安装
+        .Dependencies_item
+            el-input.input-with-select(v-model="PlugInput" placeholder='请输入需要安装的插件名' clearable)
+            el-select(placeholder='选择安装环境' v-model="Environment" clearable)
+                el-option(label='生产环境', v-bind:value='0')
+                el-option(label='开发环境', v-bind:value='1')
+
+            el-button(plain @click="SearchList" v-bind:loading="isInstalling") 安装
+
 
         .nodata(v-else) 没有数据

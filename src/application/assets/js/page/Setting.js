@@ -8,6 +8,7 @@ module.exports = {
       visible: false,
       networkURL: '',
       slider0pacity: '',
+      typeText: this.$store.state.packageType[this.$store.state.packageTypeSelect],
       custom: {
         type: "img",
         text: "",
@@ -21,6 +22,15 @@ module.exports = {
   created() {
   },
   methods: {
+    TypeChange(index) {
+      this.$store.state.packageTypeSelect = index
+      console.log(index)
+      ipcRenderer.send('setPackageTypeindex', {
+        action: '更新你选择的包管理工具',
+        keyName: "packageTypeSelect",
+        value: index
+      });
+    },
     // 开启透明度 的  checkbox 被选择的时候
     openChange(val) {
       ipcRenderer.send('setSettingConfig', {
