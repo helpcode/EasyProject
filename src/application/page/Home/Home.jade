@@ -61,7 +61,7 @@ block content
                  use(xlink:href='#icon-jinru')
           .td.drag
         el-dialog.nodrag(title="重命名项目"
-            v-bind:close-on-click-modal="false"
+            v-bind:close-on-click-modal="true"
             v-bind:visible.sync="isEditDialog")
             el-input(v-model="EditProjectName" placeholder="请输入新的文件夹名称")
             .dialog-footer(slot='footer')

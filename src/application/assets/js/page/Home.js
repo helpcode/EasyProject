@@ -31,31 +31,32 @@ let Home = new Vue({
     ProjectIcon: "",
     ProjectListData: [],
     IconList: [
-      { icon: '#icon-vue', title: 'Vue' },
-      { icon: '#icon-react', title: 'React' },
-      { icon: '#icon-angular', title: 'Angular' },
-      { icon: '#icon-typescript', title: 'TypeScript' },
-      { icon: '#icon-nodejs', title: 'Nodejs' },
-      { icon: '#icon-npm1', title: 'Npm' },
-      { icon: '#icon-console', title: 'Cli' },
-      { icon: '#icon-gulp', title: 'Gulp' },
-      { icon: '#icon-graphql', title: 'Graphql' },
-      { icon: '#icon-webpack', title: 'Webpack' },
-      { icon: '#icon-nuxt', title: 'Nuxt' },
-      { icon: '#icon-nest', title: 'Nest' },
+      {icon: '#icon-vue', title: 'Vue'},
+      {icon: '#icon-react', title: 'React'},
+      {icon: '#icon-angular', title: 'Angular'},
+      {icon: '#icon-typescript', title: 'TypeScript'},
+      {icon: '#icon-nodejs', title: 'Nodejs'},
+      {icon: '#icon-npm1', title: 'Npm'},
+      {icon: '#icon-console', title: 'Cli'},
+      {icon: '#icon-gulp', title: 'Gulp'},
+      {icon: '#icon-graphql', title: 'Graphql'},
+      {icon: '#icon-webpack', title: 'Webpack'},
+      {icon: '#icon-nuxt', title: 'Nuxt'},
+      {icon: '#icon-nest', title: 'Nest'},
     ],
     MoreList: [
-      { title: '修改图标', icon: 'el-icon-magic-stick', id: 'editIcon' },
-      { title: '重命名项目', icon: 'el-icon-edit', id: 'rename' },
-      { title: '移除项目', icon: 'el-icon-delete', id: 'delete' },
+      {title: '修改图标', icon: 'el-icon-magic-stick', id: 'editIcon'},
+      {title: '重命名项目', icon: 'el-icon-edit', id: 'rename'},
+      {title: '移除项目', icon: 'el-icon-delete', id: 'delete'},
     ]
   },
   created() {
     // 调用升级检测
     this.onMainWebContents();
     this.GetProjectList();
-    // setTimeout(() =>
-    //   this.$store.dispatch('checkUpdate','default'), 1000)
+  },
+  mounted() {
+    this.$store.dispatch('checkUpdate','default')
   },
   methods: {
     downNowDmg(url) {
@@ -84,6 +85,7 @@ let Home = new Vue({
      * 监听主进程发过来的消息
      */
     onMainWebContents() {
+
       // 主进程发送过来的消息，打开设置页面
       ipcRenderer.on('openSetting', (event, message) => {
         this.$router.push("/setting")
@@ -109,11 +111,11 @@ let Home = new Vue({
       });
 
       // 把从json数据库中获取到的配置向 vuex 中合并
-      this.$store.replaceState(Object.assign({},this.$store.state,res))
+      this.$store.replaceState(Object.assign({}, this.$store.state, res))
       console.log("设置的参数：", this.$store.state)
 
     },
-    openInfo(v,i) {
+    openInfo(v, i) {
       this.clickProjectIndex = i;
       this.$router.push({
         name: 'info',
@@ -129,6 +131,7 @@ let Home = new Vue({
      * @constructor
      */
     ShowActionClick(item) {
+      console.log("item: ", item)
       // 保存当前操作的项目文件夹名称
       this.CurrentProjectName = item[0]
 
@@ -141,7 +144,8 @@ let Home = new Vue({
             roundButton: true,
             type: 'warning'
           }).then(() => {
-            ipcRenderer.sendSync('removeListProject', {
+            console.log("this.CurrentProjectName: ", this.CurrentProjectName)
+            ipcRenderer.send('removeListProject', {
               action: '从列表移除',
               name: this.CurrentProjectName,
             });
@@ -158,12 +162,13 @@ let Home = new Vue({
                   name: this.CurrentProjectName,
                 });
                 if (status == "success") {
-                  this.$notify({ title: '提示', message: '项目已从磁盘移除成功', type: 'success' });
+                  this.$notify({title: '提示', message: '项目已从磁盘移除成功', type: 'success'});
                 } else {
-                  this.$notify.error({ title: '提示', message: status, type: 'error' });
+                  this.$notify.error({title: '提示', message: status, type: 'error'});
                 }
                 this.removeProjectItem();
-              }).catch(() => {});
+              }).catch(() => {
+              });
             }
           });
           break;
@@ -181,7 +186,8 @@ let Home = new Vue({
      * 从列表删除  和 从 磁盘删除，需要减少列表数据
      */
     removeProjectItem() {
-      let list = this.$store.getters.GET_PROJECT.filter((v,i) => {
+      // 从原数组中去除你要删除的
+      let list = this.$store.getters.GET_PROJECT.filter((v, i) => {
         if (i != this.clickProjectIndex) {
           return v;
         }
@@ -191,6 +197,19 @@ let Home = new Vue({
         res: list,
         type: "ProjectList"
       })
+
+      // 当前项目被你删除，自动跳转激活到上一个项目
+      // 处理越界
+      let index = this.clickProjectIndex - 1;
+      index < 0 ? index = 0 : index - 1
+
+      // 如果所有项目都被删完了，调回 main 主页
+      list.length == 0
+        ? this.$router.replace("/main")
+        : this.openInfo(
+          this.$store.getters.GET_PROJECT[index],
+          index
+        )
     },
 
     /**

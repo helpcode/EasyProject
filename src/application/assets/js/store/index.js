@@ -2,8 +2,11 @@ const {ipcRenderer} = require("electron");
 
 Vue.use(Vuex)
 
+console.log(window)
+
 const store = new Vuex.Store({
   state: {
+    loadingService: null,
     ProjectList: [],
     currentVsersion: null, // 保存当前版本号
     isUpdate: false, // 决定 升级弹窗是否显示,
@@ -108,9 +111,19 @@ const store = new Vuex.Store({
           v.CurrentTabs = params.currentTabs
         }
       })
-    }
+    },
+    set_loading(state, intloading) {
+      state.loadingService = intloading;
+    },
   },
   actions: {
+    loading({ commit }, title) {
+      let load = ELEMENT.Loading.service({
+        text: `${title}..`,
+        fullscreen: true
+      });
+      commit("set_loading", load)
+    },
     checkUpdate({ commit }, type) {
       let res = ipcRenderer.sendSync('checkUpdate', {
         action: '检查新版本更新',

@@ -55,15 +55,15 @@ export default class Config {
     pretty: true, // 编译输出后是否保留源码格式，true 保持
     globals: {
       css: [
-        'https://unpkg.com/element-ui/lib/theme-chalk/index.css',
+        '../../assets/js/lib/index.css',
       ],
       js: [
         '../../assets/js/lib/vue.js',
         '../../assets/js/lib/vuex.js',
         '../../assets/js/lib/vue-router.js',
         '../../assets/js/lib/axios.js',
-        'https://unpkg.com/element-ui/lib/index.js',
-        'http://at.alicdn.com/t/font_2223989_k1thl4nmkoe.js'
+        '../../assets/js/lib/index.js',
+        '../../assets/js/lib/font.js'
       ]
     }
   };
@@ -103,8 +103,8 @@ export default class Config {
       }
     },
     Home: {
-      width: 1060,
-      height: 710,
+      width: 1290,
+      height: 810,
       minHeight: 630,
       minWidth: 954,
       frame: false,

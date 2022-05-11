@@ -25,6 +25,7 @@ export class FileChice {
 
   sendSettingConfig() {
     ipcMain.on("checkUpdate", async (event, args) => {
+      console.log("升级...")
       let returnVal: any = {};
       let res = await this._Net.GET({
         url: Config.UpdateUrl,
@@ -137,20 +138,6 @@ export class FileChice {
     })
   }
 
-  InstallPlug() {
-    ipcMain.on("installPlug", async (event, args) => {
-      let pkg = JsonDB.findName(args.project);
-      let cmd = `cd ${ pkg.Fullpath } && ${this._Package.install("other", args)}`
-      exec(cmd, (error, stdout, stderr) => {
-        if (error == null) {
-          event.returnValue = "success"
-        } else {
-          event.returnValue = stderr
-        }
-      })
-    })
-  }
-
   removeListProject() {
     // 从项目列表删除项目
     ipcMain.on("removeListProject", async (event, args) => {
@@ -215,39 +202,35 @@ export class FileChice {
     })
   }
 
+  /**
+   * 停止命令
+   * @constructor
+   */
   StopProject(): void {
     ipcMain.on("StopCmd", async (event, args) => {
-      let currentTask: any = Utils.findOneTask(args);
-      if (Config.isWindows) {
-        try {
-          spawn('taskkill', [ '/T', '/F', '/PID', currentTask.Child.pid.toString() ], {
-            cwd: currentTask.path,
-            stdio: [ 'pipe', 'pipe', 'ignore' ]
-          });
+      console.log("停止命令 args: ", args)
+      let currentTask: any = Utils.findOneTask(args.name, args.ScriptName);
+      kill(currentTask.Child.pid, (err: Error | undefined) => {
+        if (err) {
+          event.returnValue = err.message
+        } else {
+          currentTask.Child = null;
+          currentTask.IsRuning = "idle"
+          currentTask.RunLogs = ""
           event.returnValue = null
-        } catch (e) {
-          event.returnValue = e.message
         }
-
-      } else if (Config.isMac || Config.isLinux) {
-        kill(currentTask.Child.pid, (err: Error | undefined) => {
-          if (err) {
-            event.returnValue = err.message
-          } else {
-            currentTask.Child = null;
-            currentTask.IsRuning = "idle"
-            currentTask.RunLogs = ""
-            event.returnValue = null
-          }
-        });
-      }
+      });
     })
   }
 
+  /**
+   * 运行命令
+   * @constructor
+   */
   RunProject(): void {
     ipcMain.on("RunCmd", async (event, args) => {
-      let currentTask: any = Utils.findOneTask(args);
-
+      console.log("运行命令: ", args)
+      let currentTask: any = Utils.findOneTask(args.name, args.ScriptName);
       let cmd = args.ScriptName == 'install'
         ? `cd ${ currentTask.path } && ${this._Package.install("i")}`
         : `cd ${ currentTask.path } && ${this._Package.run(currentTask.ScriptName)}`;
@@ -401,6 +384,27 @@ export class FileChice {
   }
 
   /**
+   * 安装依赖
+   * @constructor
+   */
+  InstallPlug() {
+    ipcMain.on("installPlug", async (event, args) => {
+      let pkg = JsonDB.findName(args.project);
+      let cmd = `cd ${ pkg.Fullpath } && ${this._Package.install("other", args)}`
+      exec(cmd, (error, stdout, stderr) => {
+        if (error == null) {
+          event.reply('reDependentSuccess', 'ok')
+        } else {
+          // event.returnValue = stderr
+          event.reply('reDependentSuccess', {
+            message: error.message
+          })
+        }
+      })
+    })
+  }
+
+  /**
    * 更新依赖包
    */
   updateDependencies() {
@@ -409,9 +413,13 @@ export class FileChice {
       cmd = `cd ${ pkg.Fullpath } && ${this._Package.up(args)}`
       exec(cmd, (error, stdout, stderr) => {
         if (error == null) {
-          event.returnValue = "success"
+          event.reply('reDependentSuccess', 'ok')
         } else {
-          event.returnValue = stderr
+          console.log(error.message)
+          // event.returnValue = stderr
+          event.reply('reDependentSuccess', {
+            message: error.message
+          })
         }
       })
     })
@@ -424,11 +432,15 @@ export class FileChice {
     ipcMain.on("dDependencies", async (event, args) => {
       let cmd, pkg = JsonDB.findName(args.project);
       cmd = `cd ${ pkg.Fullpath } && ${this._Package.uninstall(args.type)}`;
+      console.log("删除依赖包: ", cmd)
       exec(cmd, (error, stdout, stderr) => {
+        console.log(stdout)
         if (error == null) {
-          event.returnValue = "success"
+          event.reply('reDependentSuccess', 'ok')
         } else {
-          event.returnValue = stderr
+          event.reply('reDependentSuccess', {
+            message: error.message
+          })
         }
       })
     })
@@ -444,11 +456,13 @@ export class FileChice {
       let cmd = `cd ${ pkg.Fullpath } && rm -rf node_modules && ${this._Package.install("i")}`
       console.log("初始化依赖: ",cmd)
       exec(cmd, (error, stdout, stderr) => {
-        console.log(stdout)
         if (error == null) {
-          event.returnValue = "success"
+          event.reply('reDependentSuccess', 'ok')
         } else {
           // event.returnValue = stderr
+          event.reply('reDependentSuccess', {
+            message: error.message
+          })
         }
       })
     })

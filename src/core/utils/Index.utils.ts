@@ -12,6 +12,7 @@ import {Touchbar} from "@interactive/Touchbar.interactive";
 import {TrayInteractive} from "@interactive/Tray.interactive";
 import {ApplicationMenu} from "@interactive/ApplicationMenu.interactive";
 import { Dialog } from "@interactive/Dialog.interactive";
+import kill from "tree-kill";
 
 // require('electron-reload')(__dirname, {
 //   electron: "/Applications/Electron.app/Contents/MacOS/Electron"
@@ -103,12 +104,12 @@ export default class Utils {
    * 查找任务对象
    * @param args
    */
-  public static findOneTask(args: any) {
-    let project = JsonDB.findName(args.name)
+  public static findOneTask(name: string, ScriptName: string) {
+    let project = JsonDB.findName(name)
     let TaskList = Utils._TaskMap.get(project.Fullpath);
     if (TaskList !== undefined) {
       let a = TaskList.filter(v => {
-        return v.ScriptName == args.ScriptName
+        return v.ScriptName == ScriptName
       });
       a[0].path = project.Fullpath;
       return a[0]

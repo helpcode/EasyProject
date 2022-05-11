@@ -107,16 +107,23 @@
                 //        .title_tips 暂未启动过任何命令
                 //        .tips {{ titleTips }}
 
+    el-dialog(title='操作错误', v-bind:destroy-on-close="true"
+    ,v-bind:show-close="false"
+    ,v-bind:visible.sync='isShowError', width='60%')
+        .errorText(v-html="ErrorText")
+        span.dialog-footer(slot='footer')
+            el-button(type='primary', @click='isShowError = false') 确 定
+
     el-dialog.Dependencies.nodrag(title="安装依赖" v-bind:visible.sync="isShowInstallDev"
               @close="isShowInstallDev = false"
               width="60%" v-bind:close-on-click-modal="false" v-bind:destroy-on-close="true")
         .Dependencies_item
-            el-input.input-with-select(v-model="PlugInput" placeholder='请输入需要安装的插件名' clearable)
+            el-input.input-with-select(v-model="PlugInput" placeholder='请输入插件名' clearable)
             el-select(placeholder='选择安装环境' v-model="Environment" clearable)
                 el-option(label='生产环境', v-bind:value='0')
                 el-option(label='开发环境', v-bind:value='1')
 
-            el-button(plain @click="SearchList" v-bind:loading="isInstalling") 安装
+            el-button(plain @click="SearchList") 安 装
 
 
         .nodata(v-else) 没有数据

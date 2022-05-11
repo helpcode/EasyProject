@@ -98,7 +98,9 @@
 
 .base .title,
 .base .desc,
-.theme .desc {
+.theme .desc,
+.tray .title,
+.tray .desc{
     color: #fff;
 }
 
@@ -124,6 +126,7 @@
     background: #1a1a1a;
 }
 
+
 .theme .title {
     color: #4cb050 !important;
     text-shadow: 238px -64px 2px #2c2b2bb3;
@@ -141,6 +144,16 @@
 
 .theme .padding {
     padding-bottom: 0 !important;
+}
+
+.tray {
+    background: var(--background);
+}
+.tray .demonstration {
+    background: url("../img/tray.png");
+    background-size: contain;
+    left: -50px;
+    width: 71.6% !important;
 }
 
 .contact {

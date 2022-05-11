@@ -8,6 +8,8 @@ module.exports = {
   data() {
     return {
       isNeedWatch: true,
+      isShowError: false, // 是否显示错误弹窗
+      ErrorText: '', // 错误具体信息
       activeName: '',
       projectName: '',
       isRunScript: false, // 是否启动过命令
@@ -16,7 +18,6 @@ module.exports = {
       isShowInstallDev: false, // 安装依赖弹窗是否显示
       Environment: '', // 你选择安装插件的环境
       PlugInput: '', // 用户输入的插件名称
-      isInstalling: false, // 是否
       currentProcess: [], // 当前命令的进程占用
       PlugList: [],
       TerminalConfig: {
@@ -51,8 +52,8 @@ module.exports = {
     }
   },
   created() {
-
     this.GetShellMessage();
+    this.reDependentSuccess();
     this.onClose();
     this.projectName = this.$route.query.name;
     this.activeName = this.$route.query.active;
@@ -157,28 +158,16 @@ module.exports = {
      */
     async SearchList() {
       if (this.PlugInput.length != 0 && this.Environment.length != 0) {
-        this.isInstalling = true;
-        setTimeout(() => {
-          let status = ipcRenderer.sendSync('installPlug', {
-            action: '安装插件',
-            project: this.projectName,
-            name: this.PlugInput,
-            status: this.Environment
-          });
 
-          if (status == "success") {
-            this.GetDependentListData()
-            this.$notify({
-              title: '安装成功', message: `依赖：${this.PlugInput} 已被安装`, type: 'success'
-            });
-          } else {
-            this.$notify.error({
-              title: '错误', message: `依赖：${this.PlugInput} 安装失败，原因：${status}`
-            })
-          }
-          this.isInstalling = false;
-          this.isShowInstallDev = false
-        }, 300)
+        this.$store.dispatch('loading', "安装插件很慢，请耐心等待...")
+        ipcRenderer.send('installPlug', {
+          action: '安装插件',
+          project: this.projectName,
+          name: this.PlugInput,
+          status: this.Environment
+        });
+        this.isShowInstallDev = false
+
       } else {
         this.$notify.error({
           title: '提示',
@@ -249,8 +238,8 @@ module.exports = {
         res.pid = arg.pid;
         this.setContent(res.Terminal, arg.log)
       }
-      ipcRenderer.on('sendMessage',  setLogCallback);
-      this.removeListener('sendMessage',setLogCallback)
+      ipcRenderer.on('sendMessage', setLogCallback);
+      this.removeListener('sendMessage', setLogCallback)
     },
 
     // 监听进程关闭的通知
@@ -271,7 +260,7 @@ module.exports = {
         res.Terminal.writeln('进程已结束...')
       }
       ipcRenderer.on('close', closeCallback);
-      this.removeListener('close',closeCallback)
+      this.removeListener('close', closeCallback)
     },
 
     /**
@@ -422,31 +411,13 @@ module.exports = {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        const loading = this.$loading({
-          lock: true,
-          text: '删除依赖...',
+        this.$store.dispatch('loading', "删除依赖很慢，请耐心等待...")
+        va.class = type
+        ipcRenderer.send('dDependencies', {
+          action: '删除依赖',
+          type: va,
+          project: this.projectName
         });
-        setTimeout(() => {
-          va.class = type
-          let status = ipcRenderer.sendSync('dDependencies', {
-            action: '删除依赖',
-            type: va,
-            project: this.projectName
-          });
-
-          if (status == "success") {
-            this.GetDependentListData()
-            this.$notify({
-              title: '删除成功', message: `依赖：${PackName} 已被删除`, type: 'success'
-            });
-          } else {
-            this.$notify.error({
-              title: '错误', message: `依赖：${PackName} 删除失败，原因：${status}`
-            })
-          }
-          loading.close();
-        }, 300)
-
       })
     },
 
@@ -457,33 +428,13 @@ module.exports = {
      * @param PackName
      */
     updatePack(type, PackName) {
-      const loading = this.$loading({
-        lock: true,
-        text: '更新依赖...',
+      this.$store.dispatch('loading', "更新依赖很慢，请耐心等待...")
+      ipcRenderer.send('uDependencies', {
+        action: '更新依赖',
+        type: type,
+        name: PackName,
+        project: this.projectName
       });
-      setTimeout(() => {
-
-        let status = ipcRenderer.sendSync('uDependencies', {
-          action: '更新依赖',
-          type: type,
-          name: PackName,
-          project: this.projectName
-        });
-
-        if (status == "success") {
-          this.GetDependentListData()
-          this.$notify({
-            title: '更新成功', message: `依赖：${PackName} 更新成功`, type: 'success'
-          })
-        } else {
-          this.$notify.error({
-            title: '错误', message: `依赖：${PackName} 更新失败，原因：${status}`
-          })
-        }
-
-        loading.close();
-
-      }, 300)
     },
 
     /**
@@ -534,21 +485,11 @@ module.exports = {
           cancelButtonText: '取消',
           type: 'error'
         }).then(() => {
-          const loading = this.$loading({lock: true, text: '重新安装依赖...'});
-
-          setTimeout(() => {
-            let reInstall = ipcRenderer.sendSync('reDependent', {
-              action: '更新项目',
-              name: this.projectName
-            });
-
-            if (reInstall == "success") {
-              console.log("成功 =========")
-              loading.close();
-              this.GetDependentListData()
-            }
-          }, 300)
-
+          this.$store.dispatch('loading', "安装依赖很慢，请耐心等待...")
+          ipcRenderer.send('reDependent', {
+            action: '更新项目',
+            name: this.projectName
+          });
         })
       } else {
         this.$store.commit('SET_DEPENDENTLIST', {
@@ -557,6 +498,25 @@ module.exports = {
         });
       }
     },
+
+    /**
+     * 重新安装依赖完成，后端发送的回调
+     */
+    reDependentSuccess() {
+      let success = (event, arg) => {
+        console.log("reDependentSuccess ----------- ")
+        this.$store.state.loadingService.close();
+        if (arg == "ok") {
+          this.GetDependentListData();
+        } else {
+          this.isShowError = true;
+          this.ErrorText = arg.message
+        }
+      }
+      ipcRenderer.on('reDependentSuccess', success)
+      this.removeListener('reDependentSuccess', success)
+    },
+
 
     /**
      * 顶部tabs点击事件
