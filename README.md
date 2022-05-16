@@ -38,3 +38,9 @@
 
 > [releases](https://github.com/helpcode/EasyProject/releases)
 
+## 功能介绍
+
+已实现功能：
+
+-
+
