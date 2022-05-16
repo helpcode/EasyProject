@@ -1,6 +1,9 @@
 import { WebContents, BrowserWindow, Tray } from "electron";
+import chokidar from "chokidar";
+import { FSWatcher } from "fs"
 
 class Windows {
+
     private _HomeBrowserWindow!: BrowserWindow;
     private _CurrentBrowserWindow!: BrowserWindow;
     private _SettingBrowserWindow!: BrowserWindow;
@@ -13,6 +16,10 @@ class Windows {
     private _HomeBrowserWindowWebContents!: typeof WebContents;
     // @ts-ignore
     private _SettingBrowserWindowWebContents!: typeof WebContents;
+
+    public runPids: Set<number> = new Set();
+
+    public watchDirectory: Map<string, FSWatcher> = new Map();
 
     get tray(): Tray {
         return this._tray;

@@ -11,6 +11,7 @@ module.exports = {
       isShowError: false, // 是否显示错误弹窗
       ErrorText: '', // 错误具体信息
       activeName: '',
+      // 保存的就是 FolderName
       projectName: '',
       isRunScript: false, // 是否启动过命令
       titleTips: '默认显示 [任务] 中展开的命令', // 提示文字
@@ -504,7 +505,6 @@ module.exports = {
      */
     reDependentSuccess() {
       let success = (event, arg) => {
-        console.log("reDependentSuccess ----------- ")
         this.$store.state.loadingService.close();
         if (arg == "ok") {
           this.GetDependentListData();

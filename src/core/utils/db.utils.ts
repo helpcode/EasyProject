@@ -26,6 +26,7 @@ class Db {
         this.db.defaults({
             projects: [],
             setting: {
+                envVariable: '/Users/bmy/.nvm/versions/node/v12.22.12/bin:/Users/bmy/Tools/flutter/bin:/Library/Java/JavaVirtualMachines/jdk1.8.0_311.jdk/Contents/Home/bin:/Users/bmy/.deno/bin:/usr/local/opt/tcl-tk/bin:/usr/local/bin/python:/usr/local/opt/sqlite/bin:/Users/bmy/bin:/usr/local/bin:/Library/Frameworks/Python.framework/Versions/2.7/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Library/Apple/usr/bin:/usr/local/bin/:/usr/local/mysql/bin:.:/Users/bmy/Tools/Android/sdk/tools:/Users/bmy/Tools/Android/sdk/platform-tools',
                 isOpen: false,
                 selectThemeIndex: 0,
                 mask: {
@@ -63,7 +64,7 @@ class Db {
      * 根据项目名查找数据库的指定项目
      * @param name
      */
-    public findName(name: string, table: string = "projects", key: string = "FolderName"): { [key: string]: any} {
+    public findName(name: string, key: string = "FolderName" ,table: string = "projects"): { [key: string]: any} {
         return this.db.get(table).find({ [ key ]: name }).value()
     }
 
@@ -78,7 +79,7 @@ class Db {
     /**
      * 获取所有项目
      */
-    public project(table: string = "projects"): undefined | { [key: string]: any} | Array<Object> {
+    public project(table: string = "projects"): any {
         return this.db.get(table).value();
     }
 

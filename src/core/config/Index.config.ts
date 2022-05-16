@@ -4,7 +4,6 @@ import { ApiUrlConfig } from "@type/ApiConfig";
 import {
   AboutPanelOptionsOptions,
   app,
-  remote,
   dialog,
   MenuItem,
   MenuItemConstructorOptions,
@@ -20,6 +19,7 @@ import { JadeOptions } from "jade";
 import Utils from "@utils/Index.utils";
 import JsonDB from "@utils/db.utils";
 import { spawn } from "child_process";
+import kill from "tree-kill";
 
 const { TouchBarLabel, TouchBarButton, TouchBarSpacer, TouchBarPopover } = TouchBar;
 
@@ -154,7 +154,11 @@ export default class Config {
         label: '导入项目',
         accelerator: "Cmd+i",
         click: async (menuItem: any, browserWindow: any, event: any) => {
-          let res = await Utils.ImportProject();
+          let res = await Utils.ImportProject((item) => {
+            console.log("Tray 导入的项目监听后被修改路径：", item)
+            // event.reply('DirRemove', item)
+            browserWindow.webContents.send('DirRemove', item)
+          });
           if (!browserWindow.webContents.getURL().includes("Welcome.html")) {
             browserWindow.webContents.send('TouchBarImportProject', res)
           }
@@ -212,14 +216,18 @@ export default class Config {
       {
         label: `重启应用`,
         click: () => {
-          app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) })
-          app.exit(0)
+          Utils.killAllTask(() => {
+            app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) })
+            app.exit(0)
+          })
         }
       },
       {
         label: `杀死 ${ app.name }`,
         click: () => {
-          app.exit(0)
+          Utils.killAllTask(() => {
+            app.exit(0)
+          })
         }
       }
     ],
@@ -260,8 +268,11 @@ export default class Config {
           label: '导入项目',
           accelerator: "Cmd+i",
           click: async (menuItem: any, browserWindow: any, event: any) => {
-            let res = await Utils.ImportProject();
-            console.log("导入项目 res: ", res)
+            let res = await Utils.ImportProject((item) => {
+              console.log("Menu 导入的项目监听后被修改路径：", item)
+              // event.reply('DirRemove', item)
+              browserWindow.webContents.send('DirRemove', item)
+            });
             if (!browserWindow.webContents.getURL().includes("Welcome.html")) {
               browserWindow.webContents.send('TouchBarImportProject', res)
             }
@@ -328,8 +339,11 @@ export default class Config {
         iconPosition: "left",
         icon: join(__dirname, '../../application/assets/img/+normal@2x.png'),
         click: async () => {
-          let res = await Utils.ImportProject();
-          console.log("导入项目 res: ", res)
+          let res = await Utils.ImportProject((item) => {
+            console.log("TouchBar 导入的项目监听后被修改路径：", item)
+            // event.reply('DirRemove', item)
+            Windows.CurrentBrowserWindow.webContents.send('DirRemove', item)
+          });
           if (!Windows.CurrentBrowserWindow.webContents.getURL().includes("Welcome.html")) {
             Windows.CurrentBrowserWindow.webContents.send('TouchBarImportProject', res)
           }

@@ -22,9 +22,14 @@ module.exports = {
   created() {
   },
   methods: {
+    // 重新选择nodejs的路径
+    selectEnvPath() {
+      ipcRenderer.send('selectEnvPath', {
+        action: '重新选择nodejs的路径'
+      });
+    },
     TypeChange(index) {
       this.$store.state.packageTypeSelect = index
-      console.log(index)
       ipcRenderer.send('setPackageTypeindex', {
         action: '更新你选择的包管理工具',
         keyName: "packageTypeSelect",

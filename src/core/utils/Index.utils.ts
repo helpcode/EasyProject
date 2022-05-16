@@ -13,6 +13,7 @@ import {TrayInteractive} from "@interactive/Tray.interactive";
 import {ApplicationMenu} from "@interactive/ApplicationMenu.interactive";
 import { Dialog } from "@interactive/Dialog.interactive";
 import kill from "tree-kill";
+import chokidar, { FSWatcher } from "chokidar";
 
 // require('electron-reload')(__dirname, {
 //   electron: "/Applications/Electron.app/Contents/MacOS/Electron"
@@ -22,6 +23,66 @@ export default class Utils {
 
   public static CheckAjaxUrl(): string {
     return Config.ApiUrl.BaseUrl
+  }
+
+  /**
+   * 删除文件监听
+   * @param path 文件的完整路径
+   */
+  public static async removeDirWatch(path: string) {
+    // 判断 Map 里面是否有这个文件的监听，有则解除文件监听
+    if (Windows.watchDirectory.has(path)) {
+      let watchObj = Windows.watchDirectory.get(path);
+      await (watchObj as FSWatcher).unwatch(path);
+      Windows.watchDirectory.delete(path);
+    }
+  }
+
+  /**
+   * 增加文件监听
+   * @param path
+   */
+  public static addDirWatch(path: string, callback: () => void) {
+    // 用文件名来作为key，值是文件夹监听器的返回值
+    Windows.watchDirectory.set(
+      path,
+      chokidar.watch(path, {
+        persistent: true,
+        ignoreInitial: false,
+        followSymlinks: false,
+        usePolling: true,
+        interval: 300,
+        depth: 1,
+        ignored: 'node_modules/**/*',
+        cwd: path
+      }).on("unlinkDir", () => {
+        // 如果监听到之前磁盘上还存在的文件，现在被修改了，
+        // 那么判断 这个文件夹现在还存在吗？
+        // 如果不存在 将被删除文件的下标给前端，让前端能过滤数据 和 自动激活tab
+        if (!existsSync(path)) {
+          callback()
+        }
+      })
+    );
+  }
+
+  public static killAllTask(callback: () => void) {
+    let pidsArr: number[] = Array.from(Windows.runPids)
+    // 如果有正在运行的命令
+    if (pidsArr.length != 0) {
+      // 遍历 干掉你运行过的命令进程
+      Windows.runPids.forEach(v => {
+        kill(v)
+        // 是否已经杀到最后一个进程了，必须等 kill 全部杀完然后
+        // 延迟一下才能关闭程序，否则关程序速度太快会导致进程杀不完
+        if (pidsArr[pidsArr.length -1] == v) {
+          // dialog.showErrorBox("最后一个", v.toString())
+          setTimeout(() => callback(),400)
+        }
+      })
+    } else {
+      callback()
+    }
   }
 
   /**
@@ -119,14 +180,21 @@ export default class Utils {
   /**
    *  导入项目 被 前端 和 Touchbar 用到
    */
-  public static async ImportProject(): Promise<any> {
+  public static async ImportProject(listener?: (...args: any[]) => void): Promise<any> {
     let DirectoryPath = await Dialog.showDialog({
       message: "选择您的项目",
       buttonLabel: '导入项目',
       properties: [ 'openDirectory', 'showHiddenFiles' ]
     });
     if (DirectoryPath) {
-      let res = await Utils.GetPathFileList(DirectoryPath[ 0 ]);
+      let res = await Utils.GetPathFileList(DirectoryPath[0]);
+
+      Utils.addDirWatch(res.Fullpath, () => {
+        console.log("导入项目 watch: ", listener)
+        if (listener) {
+          listener(res)
+        }
+      })
       Utils.setTrayTitleNums();
       Utils.updateTouchbarList();
       return res;
@@ -358,8 +426,8 @@ export default class Utils {
 
       // 当点击关闭按钮
       Windows.CurrentBrowserWindow.on('close', (e: any) => {
-        console.log(" 阻止退出程序，重点")
-        // 阻止退出程序，重点
+        console.log(" 阻止退出程序，重点...")
+        // // 阻止退出程序，重点
         e.preventDefault();
         // 隐藏主程序窗口
         Windows.CurrentBrowserWindow.hide()

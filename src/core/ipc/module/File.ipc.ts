@@ -1,16 +1,19 @@
-import { app, ipcMain } from "electron";
+import { app, ipcMain, shell } from "electron";
 import { Dialog } from "@interactive/Dialog.interactive";
 import { Inject } from "@annotation/Ioc.annotation";
 import { Http } from "@net/Http.net";
 import Utils from "@utils/Index.utils";
 import JsonDB from "@utils/db.utils";
-import { existsSync, readJsonSync, remove } from "fs-extra";
+import { existsSync, readJsonSync, remove, watch } from "fs-extra";
 import { exec, spawn } from "child_process";
 import Config from "@config/Index.config";
 import kill from "tree-kill";
 import { basename, dirname, resolve } from "path";
 import { ProcessUtils } from "@utils/process.utils";
 import { Package } from "@utils/package.utils";
+import Windows from "@model/Windows.model";
+import chokidar, { FSWatcher } from "chokidar";
+import { WhichBin } from "@utils/whichBin.utils"
 
 export class FileChice {
 
@@ -19,6 +22,9 @@ export class FileChice {
 
   @Inject()
   private readonly _Package!: Package;
+
+  @Inject()
+  private readonly _WhichBin!: WhichBin;
 
   // @Inject()
   private readonly _process: ProcessUtils = new ProcessUtils();
@@ -50,6 +56,21 @@ export class FileChice {
       } else {
         returnVal.isUpdate = false;
       }
+    })
+
+    ipcMain.on("selectEnvPath", async (event, args) => {
+      let DirectoryPath = await Dialog.showDialog({
+        message: "选择您的Node脚本所在路径",
+        buttonLabel: '选择',
+        properties: [ 'openDirectory', 'showHiddenFiles' ]
+      });
+      console.log("你选择的路径为: ", DirectoryPath[0]);
+      JsonDB.update("envVariable", DirectoryPath[0])
+      await this._WhichBin.initEnvPath();
+      Utils.killAllTask(() => {
+        app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) })
+        app.exit(0)
+      })
     })
 
     ipcMain.on("getVersion", async (event, args) => {
@@ -138,9 +159,14 @@ export class FileChice {
     })
   }
 
+  /**
+   * 从项目列表删除项目
+   */
   removeListProject() {
     // 从项目列表删除项目
     ipcMain.on("removeListProject", async (event, args) => {
+      let { Fullpath } = JsonDB.findName(args.name,"name");
+      Utils.removeDirWatch(Fullpath);
       let a = JsonDB.remove({ name: args.name });
       if (a != undefined) {
         Utils.updateTouchbarList();
@@ -151,14 +177,14 @@ export class FileChice {
       }
     });
 
-
     // 从磁盘删除项目
     ipcMain.on("removeDistProject", async (event, args) => {
-      let project = JsonDB.findName(args.name);
-      console.log(project.Fullpath)
+      let project = JsonDB.findName(args.name, "name");
+      Utils.removeDirWatch(project.Fullpath);
       try {
-        // 从磁盘删除
-        await remove(resolve(project.Fullpath));
+        // 删除到回收站
+        await shell.trashItem(resolve(project.Fullpath))
+        // await remove();
         // 从本地数据库删除
         JsonDB.remove({ name: args.name });
         event.returnValue = "success"
@@ -198,7 +224,11 @@ export class FileChice {
    */
   openDirectory() {
     ipcMain.on("openDirectory", async (event, args) => {
-      event.returnValue = await Utils.ImportProject();
+      let res = await Utils.ImportProject((item) => {
+        console.log("导入的项目监听后被修改路径：", item)
+        event.reply('DirRemove', item)
+      });
+      event.returnValue = res;
     })
   }
 
@@ -249,6 +279,11 @@ export class FileChice {
           currentTask.RunLogs += data.toString();
           if (currentTask.Child != null) {
             currentTask.pid = currentTask.Child.pid;
+
+            // 保存 你正在运行的 pid
+            Windows.runPids.add(currentTask.pid);
+            console.log("运行命令，添加pid: ", Windows.runPids)
+
             // 后端返回 ScriptName 为前端助力，让前端的 sendMessage 监听
             // 中知道把 log 日志存放到数组的哪个 v.Terminal 中
             event.sender.send('sendMessage', {
@@ -264,7 +299,12 @@ export class FileChice {
         currentTask.Child.stdout.on('close', (code: Number, signal: string) => {
           console.log("5 进程结束")
 
+          // 删除已经停止的 pid
+          Windows.runPids.delete(currentTask.pid);
           currentTask.pid = 0;
+
+          console.log("停止命令，删除pid: ", Windows.runPids)
+
           // 关闭进程
           currentTask.IsRuning = "idle"
           currentTask.RunLogs = ""
@@ -338,7 +378,21 @@ export class FileChice {
    */
   ProjectList() {
     ipcMain.on("ProjectList", async (event, args) => {
-      event.returnValue = JsonDB.project()
+      let allProject = JsonDB.project();
+      event.returnValue = allProject.filter((v:any,index: number) => {
+        // 打开软件的时候，判断本地项目路径是否存在
+        // 把存在的返回数据给前端，来展示项目列表
+        if (existsSync(v.Fullpath)) {
+          Utils.addDirWatch(v.Fullpath, () => {
+            event.reply('DirRemove', v)
+          })
+          return v
+        } else {
+          // 路径已经不存在了，删除json
+          console.log("路径已经不存在了，删除json")
+          JsonDB.remove({ name: v.name });
+        }
+      });
     })
   }
 

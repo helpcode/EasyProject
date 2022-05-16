@@ -24,7 +24,7 @@ let Home = new Vue({
 
     // 保存 重命名项目 的输入值
     EditProjectName: "",
-    // 操作的当前项目
+    // 操作的当前项目 就是 name 名称
     CurrentProjectName: "",
 
     // 保存用户选择的图片类名
@@ -56,7 +56,7 @@ let Home = new Vue({
     this.GetProjectList();
   },
   mounted() {
-    this.$store.dispatch('checkUpdate','default')
+    // this.$store.dispatch('checkUpdate','default')
   },
   methods: {
     downNowDmg(url) {
@@ -89,6 +89,24 @@ let Home = new Vue({
       // 主进程发送过来的消息，打开设置页面
       ipcRenderer.on('openSetting', (event, message) => {
         this.$router.push("/setting")
+      })
+
+      // 文件被删除
+      ipcRenderer.on('DirRemove', (event, arg) => {
+        console.log("检测到您的文件路径发生变化: ", arg)
+        ipcRenderer.send('removeListProject', {
+          action: '从列表移除',
+          name: arg.name,
+        });
+        this.removeProjectItem("autoWatch", arg.FolderName);
+        // this.$confirm(`该路径下文件：${arg.Fullpath} 发生变化，即将移除项目！`, '提示', {
+        //   confirmButtonText: '确定',
+        //   cancelButtonText: '取消',
+        //   type: 'error'
+        // }).then(() => {
+        //
+        // }).catch(() => {
+        // });
       })
 
       // 使用 touchbar导入项目
@@ -144,7 +162,6 @@ let Home = new Vue({
             roundButton: true,
             type: 'warning'
           }).then(() => {
-            console.log("this.CurrentProjectName: ", this.CurrentProjectName)
             ipcRenderer.send('removeListProject', {
               action: '从列表移除',
               name: this.CurrentProjectName,
@@ -152,7 +169,7 @@ let Home = new Vue({
             this.removeProjectItem();
           }).catch((action) => {
             if (action == "cancel") {
-              this.$confirm('此操作将永久删除项目，您确定进行此操作？', '删除提示', {
+              this.$confirm('项目将会被删除到【废纸篓】，确定继续？', '删除提示', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
                 type: 'error'
@@ -162,7 +179,7 @@ let Home = new Vue({
                   name: this.CurrentProjectName,
                 });
                 if (status == "success") {
-                  this.$notify({title: '提示', message: '项目已从磁盘移除成功', type: 'success'});
+                  this.$notify({title: '提示', message: '项目删除成功', type: 'success'});
                 } else {
                   this.$notify.error({title: '提示', message: status, type: 'error'});
                 }
@@ -181,15 +198,27 @@ let Home = new Vue({
       }
     },
 
-
     /**
-     * 从列表删除  和 从 磁盘删除，需要减少列表数据
+     *  从列表删除  和 从 磁盘删除，需要减少列表数据
+     * @param type
+     *           default 表示从 列表 和 磁盘进行删除
+     *           autoWatch 表示检测到的自动删除
+     * @param condition autoWatch 的筛选条件
      */
-    removeProjectItem() {
+    removeProjectItem(type = "default", condition) {
       // 从原数组中去除你要删除的
       let list = this.$store.getters.GET_PROJECT.filter((v, i) => {
-        if (i != this.clickProjectIndex) {
-          return v;
+        if (type == "default") {
+          if (i != this.clickProjectIndex) {
+            return v;
+          }
+        } else {
+          if (v.FolderName != condition) {
+            return v;
+          } else {
+            // 将你当前移动文件位置的项目路径保存起来，为下面自动激活做准备
+            this.clickProjectIndex = i
+          }
         }
       });
 
