@@ -34,7 +34,7 @@
 
 ### 下载
 
-打开链接，选最新版本，然后从`Assets`中`EasyProject-x.x.x.dmg`进行下载即可。
+打开链接，选最新版本，然后从`Assets`中选择`EasyProject-x.x.x.dmg`进行下载即可。
 
 > [releases](https://github.com/helpcode/EasyProject/releases)
 
