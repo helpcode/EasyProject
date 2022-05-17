@@ -26,6 +26,9 @@
 
 `EasyProject` 是一款`Mac`平台下的前端项目管理工具，能够一键导入本地的前端项目，帮助您将零碎零散的前端项目进行统一化GUI管理和配置，协助您提高项目开发的效率。
 
+![install.png](./website/img/doc/install-min.png)
+![main-min.png](./website/img/doc/main-min.png)
+![package-min.png](./website/img/doc/package-min.png)
 ![theme.png](./website/img/theme.png)
 
 ### 官网
