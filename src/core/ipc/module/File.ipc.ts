@@ -5,7 +5,7 @@ import { Http } from "@net/Http.net";
 import Utils from "@utils/Index.utils";
 import JsonDB from "@utils/db.utils";
 import { existsSync, readJsonSync, remove, watch } from "fs-extra";
-import { exec, spawn } from "child_process";
+import { exec, execSync, spawn } from "child_process";
 import Config from "@config/Index.config";
 import kill from "tree-kill";
 import { basename, dirname, resolve } from "path";
@@ -14,6 +14,7 @@ import { Package } from "@utils/package.utils";
 import Windows from "@model/Windows.model";
 import chokidar, { FSWatcher } from "chokidar";
 import { WhichBin } from "@utils/whichBin.utils"
+import moment from "moment"
 
 export class FileChice {
 
@@ -64,13 +65,14 @@ export class FileChice {
         buttonLabel: '选择',
         properties: [ 'openDirectory', 'showHiddenFiles' ]
       });
-      console.log("你选择的路径为: ", DirectoryPath[0]);
-      JsonDB.update("envVariable", DirectoryPath[0])
-      await this._WhichBin.initEnvPath();
-      Utils.killAllTask(() => {
-        app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) })
-        app.exit(0)
-      })
+      if (DirectoryPath) {
+        JsonDB.update("envVariable", DirectoryPath[0])
+        await this._WhichBin.initEnvPath();
+        Utils.killAllTask(() => {
+          app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) })
+          app.exit(0)
+        })
+      }
     })
 
     ipcMain.on("getVersion", async (event, args) => {
@@ -86,7 +88,15 @@ export class FileChice {
     })
 
     ipcMain.on("setPackageTypeindex", async (event, args) => {
-      JsonDB.update(args.keyName, args.value)
+      try {
+        let res = execSync(`which ${args.packageType}`);
+        console.log("res: ", res.toString())
+        JsonDB.update(args.keyName, args.value)
+        event.returnValue = { status: true, message: null }
+      } catch (e) {
+        event.returnValue = { status: false, message: e.message }
+      }
+
     })
 
     ipcMain.on("getSettingConfig", async (event, args) => {
@@ -273,6 +283,7 @@ export class FileChice {
         });
         // 修改运行状态
         currentTask.IsRuning = "runing"
+        currentTask.time = Date.now()
 
         currentTask.Child.stdout.on('data', (data: Buffer) => {
 
@@ -309,10 +320,12 @@ export class FileChice {
           currentTask.IsRuning = "idle"
           currentTask.RunLogs = ""
           currentTask.Child = null;
+          currentTask.time = Date.now() - currentTask.time
 
           event.sender.send('close', {
             ScriptName: currentTask.ScriptName,
-            projectName: args.name
+            projectName: args.name,
+            time: moment(currentTask.time).format("mm:ss")
           });
 
         });
@@ -351,7 +364,8 @@ export class FileChice {
           ScriptShell: scriptList[ key ], // 命令的脚本
           Terminal: null,
           Child: null,
-          pid: 0
+          pid: 0,
+          time: 0,
         })
       }
       NewSrciptList.unshift({
@@ -362,7 +376,8 @@ export class FileChice {
         ScriptShell: this._Package.install("i"),
         Terminal: null,
         Child: null,
-        pid: 0
+        pid: 0,
+        time: 0,
       });
 
       // 深拷贝，去除再次回到【任务模块】的时候，Child中保存的子进程无法被ipc发送的问题

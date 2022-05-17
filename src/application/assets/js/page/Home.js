@@ -91,6 +91,12 @@ let Home = new Vue({
         this.$router.push("/setting")
       })
 
+      // 主进程发送过来的消息，在 应用内打开
+      ipcRenderer.on('openInfo', (event, arg) => {
+        console.log("应用内打开: ", arg)
+        this.openInfo(arg.item, arg.index)
+      })
+
       // 文件被删除
       ipcRenderer.on('DirRemove', (event, arg) => {
         console.log("检测到您的文件路径发生变化: ", arg)

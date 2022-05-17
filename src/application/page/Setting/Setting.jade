@@ -49,14 +49,14 @@
         v-model='$store.state.mask.blur')
 
     .login_start
-      span(style="margin-right: 9px;") Node 解释器：
-      .path {{ $store.state.envVariable }}
-      el-link(@click="selectEnvPath" target='_blank' v-bind:style="{'--fill-color': $store.getters.get_list[$store.getters.get_theme].type == 'color' ? $store.getters.get_list[$store.getters.get_theme].BgColor : $store.getters.get_list[$store.getters.get_theme].activeBgColor }") 自定义
-
-    .login_start
       span(style="margin-right: 9px;") 包管理工具选择：
       el-select(v-model="typeText", placeholder="请选择", @change="TypeChange")
         el-option(v-for='(item, index) in $store.state.packageType', v-bind:key="index", v-bind:label="item", v-bind:value="index")
+
+    .login_start
+      span(style="margin-right: 9px;") Node 解释器：
+      .path {{ $store.state.envVariable }}
+      el-link(@click="selectEnvPath" target='_blank' v-bind:style="{'--fill-color': $store.getters.get_list[$store.getters.get_theme].type == 'color' ? $store.getters.get_list[$store.getters.get_theme].BgColor : $store.getters.get_list[$store.getters.get_theme].activeBgColor }") 自定义
 
 
 

@@ -26,9 +26,10 @@ class Db {
         this.db.defaults({
             projects: [],
             setting: {
-                envVariable: '/Users/bmy/.nvm/versions/node/v12.22.12/bin:/Users/bmy/Tools/flutter/bin:/Library/Java/JavaVirtualMachines/jdk1.8.0_311.jdk/Contents/Home/bin:/Users/bmy/.deno/bin:/usr/local/opt/tcl-tk/bin:/usr/local/bin/python:/usr/local/opt/sqlite/bin:/Users/bmy/bin:/usr/local/bin:/Library/Frameworks/Python.framework/Versions/2.7/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Library/Apple/usr/bin:/usr/local/bin/:/usr/local/mysql/bin:.:/Users/bmy/Tools/Android/sdk/tools:/Users/bmy/Tools/Android/sdk/platform-tools',
+                envVariable: '/usr/local/bin',
                 isOpen: false,
-                selectThemeIndex: 0,
+                isShowDockIcon: false,
+                selectThemeIndex: 1,
                 mask: {
                     open: true,
                     opacity: 0.4,

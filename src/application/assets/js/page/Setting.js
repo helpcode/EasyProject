@@ -29,12 +29,28 @@ module.exports = {
       });
     },
     TypeChange(index) {
-      this.$store.state.packageTypeSelect = index
-      ipcRenderer.send('setPackageTypeindex', {
+
+      let res = ipcRenderer.sendSync('setPackageTypeindex', {
         action: '更新你选择的包管理工具',
         keyName: "packageTypeSelect",
-        value: index
+        value: index,
+        packageType:  this.$store.state.packageType[index]
       });
+
+      console.log(res)
+      if (!res.status) {
+        this.$confirm(`出现错误：${res.message}`, '提示', {
+          distinguishCancelAndClose: true,
+          confirmButtonText: '我知道了',
+          showCancelButton: false,
+          roundButton: true,
+          type: 'error'
+        }).then(() => {
+          this.typeText = this.$store.state.packageType[this.$store.state.packageTypeSelect]
+        })
+      } else {
+        this.$store.state.packageTypeSelect = index;
+      }
     },
     // 开启透明度 的  checkbox 被选择的时候
     openChange(val) {

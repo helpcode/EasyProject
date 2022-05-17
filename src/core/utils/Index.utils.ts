@@ -188,9 +188,7 @@ export default class Utils {
     });
     if (DirectoryPath) {
       let res = await Utils.GetPathFileList(DirectoryPath[0]);
-
       Utils.addDirWatch(res.Fullpath, () => {
-        console.log("导入项目 watch: ", listener)
         if (listener) {
           listener(res)
         }

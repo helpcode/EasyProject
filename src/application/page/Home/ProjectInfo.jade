@@ -10,7 +10,7 @@
                 span &nbsp; 配置
             div(class="package" v-bind:key="projectName")
 
-        el-tab-pane(name='task')
+        el-tab-pane(name='task' v-bind:key="`${projectName}`")
             span(slot='label' class="icons")
                 //i(class="iconfont icon-config-command") &nbsp;任务
                 //img(src="../../assets/img/SidebarAllMyFiles.png")
@@ -22,10 +22,12 @@
                     el-collapse-item(v-bind:name="`${v.ScriptName}_${i}`" v-for="(v,i) in CurrentTaskList"
                         v-bind:key="`${projectName}_${v.ScriptName}_${i}`")
                         template(slot="title")
-                            svg.icon.icon-npm1(aria-hidden='true')
+                            .run_icon(v-if="v.IsRuning == 'runing'")
+                            svg.icon.icon-npm1(aria-hidden='true' v-else)
                                 use(xlink:href='#icon-npm1')
                             .text
                                 span.ScriptName {{ v.ScriptName }}
+                                span(v-if="v.IsRuning == 'runing'") &nbsp;Pid：{{ v.pid }}
                                 span.ScriptShell {{ v.ScriptShell }}
                         .terminals
                             .terminal_action

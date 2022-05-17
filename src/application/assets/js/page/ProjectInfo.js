@@ -67,10 +67,15 @@ module.exports = {
 
       this.projectName = this.$route.query.name;
       this.activeName = this.$route.query.active;
+      this.isNeedWatch = this.$route.query.isNeedWatch;
 
       // 如果进入页面是 home（配置）的话就获取最新的package.json
       if (this.activeName == "home") {
         this.SwitcTabs(this.$route.query.active)
+      }
+
+      if (this.isNeedWatch) {
+        this.currentSrcipt = ""
       }
 
       // 如果进入tabs的 task 任务栏
@@ -139,7 +144,7 @@ module.exports = {
           let editor = await Utils.initVscodeEdit(this.projectName);
           editor.setValue(JSON.stringify(JsonCode))
           // 格式化json代码
-          setTimeout(() => editor.getAction('editor.action.formatDocument').run(), 150)
+          setTimeout(() => editor.getAction('editor.action.formatDocument').run(), 300)
           // 监听文件修改，实时获取代码，传给 主进程 来写到对应项目的package.json中
           editor.onDidChangeModelContent((e) => {
             // console.log(editor.getValue())
@@ -257,8 +262,9 @@ module.exports = {
         res.lock = true;
         res.pid = 0;
         res.IsRuning = "idle";
-        res.RunLogs += "进程已结束...";
-        res.Terminal.writeln('进程已结束...')
+        res.RunLogs += "命令已结束...";
+        res.Terminal.writeln(`命令已结束..`)
+        res.Terminal.writeln(`运行时间: ${arg.time}s..`)
       }
       ipcRenderer.on('close', closeCallback);
       this.removeListener('close', closeCallback)
@@ -585,6 +591,7 @@ module.exports = {
     // 返回当前你打开的命令
     CurrentTask() {
       return ScriptName => {
+        console.log("返回当前你打开的命令 ScriptName: ", ScriptName)
         let curr = this.CurrentTaskList.filter(v => {
           if (v.ScriptName == ScriptName) {
             return v;

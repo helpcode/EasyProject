@@ -1,6 +1,6 @@
 {
   "name": "EasyProject",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "一款前端项目管理工具",
   "main": "dist/App.js",
   "scripts": {

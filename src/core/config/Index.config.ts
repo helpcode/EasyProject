@@ -19,9 +19,8 @@ import { JadeOptions } from "jade";
 import Utils from "@utils/Index.utils";
 import JsonDB from "@utils/db.utils";
 import { spawn } from "child_process";
-import kill from "tree-kill";
 
-const { TouchBarLabel, TouchBarButton, TouchBarSpacer, TouchBarPopover } = TouchBar;
+const { TouchBarButton, TouchBarPopover } = TouchBar;
 
 export default class Config {
   /**
@@ -36,6 +35,11 @@ export default class Config {
   public static isLinux: Boolean = process.platform === 'linux';
   public static LogsPath: string = "../../../logs/";
 
+  public static isShowDockIcon: boolean = JsonDB.findOne("isShowDockIcon", "setting");
+  // 是否开机自启 默认 false
+  public static isLoginOpen: boolean = JsonDB.findOne("isOpen", "setting");
+
+  public static default = Config.isShowDockIcon ? app.dock.hide() : app.dock.show()
   // 升级地址
   public static UpdateUrl: string = "https://api.github.com/repos/helpcode/EasyProject/releases/latest";
 
@@ -146,7 +150,7 @@ export default class Config {
       {
         label: '显示主窗口',
         click: (menuItem: any, browserWindow: any, event: any) => {
-          Windows?.CurrentBrowserWindow?.show();
+          Windows.CurrentBrowserWindow.show();
         }
       },
       { type: 'separator' },
@@ -157,16 +161,17 @@ export default class Config {
           let res = await Utils.ImportProject((item) => {
             console.log("Tray 导入的项目监听后被修改路径：", item)
             // event.reply('DirRemove', item)
-            browserWindow.webContents.send('DirRemove', item)
+            Windows.CurrentBrowserWindow.webContents.send('DirRemove', item)
           });
-          if (!browserWindow.webContents.getURL().includes("Welcome.html")) {
-            browserWindow.webContents.send('TouchBarImportProject', res)
+          if (!Windows.CurrentBrowserWindow.webContents.getURL().includes("Welcome.html")) {
+            Windows.CurrentBrowserWindow.webContents.send('TouchBarImportProject', res)
           }
         }
       },
       {
         // TODO 导入 项目 的时候，这边项目列表不更新
-        label: '项目列表(功能暂未全实现)',
+        // label: '项目列表(功能暂未全实现)',
+        label: '项目列表',
         submenu: (JsonDB.project() as Array<any>).map((v:any,index) => {
           return {
             label: `${v.name}`,
@@ -187,6 +192,9 @@ export default class Config {
                 label: '在应用打开',
                 click: async (menuItem: any, browserWindow: any, event: any) => {
                   Windows.CurrentBrowserWindow.show();
+                  Windows.CurrentBrowserWindow.webContents.send('openInfo', {
+                    item: v, index
+                  })
                 }
               },
             ]
@@ -198,17 +206,27 @@ export default class Config {
         label: "设置...",
         accelerator: "Cmd+,",
         click: async (menuItem: any, browserWindow: any, event: any) => {
-          if (!browserWindow.webContents.getURL().includes("Welcome.html")) {
-            browserWindow.webContents.send('openSetting')
-          } else {
+          if (!Windows.CurrentBrowserWindow.webContents.getURL().includes("Welcome.html")) {
+            Windows.CurrentBrowserWindow.show();
+            Windows.CurrentBrowserWindow.webContents.send('openSetting')
           }
+        }
+      },
+      {
+        label: "开机自启",
+        type: "checkbox",
+        checked: Config.isLoginOpen,
+        click: async (menuItem: any, browserWindow: any, event: any) => {
+          console.log("menuItem: ", menuItem.checked)
+          JsonDB.update("isOpen", menuItem.checked, "setting");
         }
       },
       {
         label: '隐藏Dock图标',
         type: 'checkbox',
-        checked: false,
+        checked: Config.isShowDockIcon,
         click: async (menuItem: any, browserWindow: any, event: any) => {
+          JsonDB.update("isShowDockIcon", menuItem.checked, "setting");
           menuItem.checked ? app.dock.hide() : app.dock.show()
         }
       },
@@ -245,9 +263,9 @@ export default class Config {
           label: "偏好设置",
           accelerator: "Cmd+,",
           click: async (menuItem: any, browserWindow: any, event: any) => {
-            if (!browserWindow.webContents.getURL().includes("Welcome.html")) {
-              browserWindow.webContents.send('openSetting')
-            } else {
+            if (!Windows.CurrentBrowserWindow.webContents.getURL().includes("Welcome.html")) {
+              Windows.CurrentBrowserWindow.show();
+              Windows.CurrentBrowserWindow.webContents.send('openSetting')
             }
           }
         },
@@ -268,13 +286,12 @@ export default class Config {
           label: '导入项目',
           accelerator: "Cmd+i",
           click: async (menuItem: any, browserWindow: any, event: any) => {
-            let res = await Utils.ImportProject((item) => {
-              console.log("Menu 导入的项目监听后被修改路径：", item)
-              // event.reply('DirRemove', item)
-              browserWindow.webContents.send('DirRemove', item)
+            let res = await Utils.ImportProject(item => {
+              Windows.CurrentBrowserWindow.webContents.send('DirRemove', item)
             });
-            if (!browserWindow.webContents.getURL().includes("Welcome.html")) {
-              browserWindow.webContents.send('TouchBarImportProject', res)
+            if (!Windows.CurrentBrowserWindow.webContents.getURL().includes("Welcome.html")) {
+              Windows.CurrentBrowserWindow.show();
+              Windows.CurrentBrowserWindow.webContents.send('TouchBarImportProject', res)
             }
           }
         },
@@ -341,7 +358,6 @@ export default class Config {
         click: async () => {
           let res = await Utils.ImportProject((item) => {
             console.log("TouchBar 导入的项目监听后被修改路径：", item)
-            // event.reply('DirRemove', item)
             Windows.CurrentBrowserWindow.webContents.send('DirRemove', item)
           });
           if (!Windows.CurrentBrowserWindow.webContents.getURL().includes("Welcome.html")) {
